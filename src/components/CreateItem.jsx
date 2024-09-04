@@ -6,7 +6,7 @@ const CreateItem = () => {
   return (
     <StorageManager
       acceptedFileTypes={['image/*']}
-      path="public/"
+      path="picture-submissions/"
       maxFileCount={1}
       isResumable
     />
