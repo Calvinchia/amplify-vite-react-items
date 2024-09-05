@@ -28,7 +28,7 @@ const Home = () => {
     setLoading(true);
     setError('');
     try {
-      const pagelimit = 6;
+      const pagelimit = 8;
       const response = await fetch(
         `https://mlkou5mk3a.execute-api.ap-southeast-1.amazonaws.com/dev/items?limit=${pagelimit}&offset=${(currentPage - 1) * pagelimit}`
       );
@@ -45,7 +45,6 @@ const Home = () => {
         // Append only the new items to the existing list
         return [...prevItems, ...newItems];
       });
-      // setItems((prevItems) => [...prevItems, ...data.results]);
       setHasMore(data.results.length > 0);
     } catch (error) {
       setError('Failed to fetch items. Please try again.');
@@ -88,6 +87,7 @@ const Home = () => {
               <Card
                 hoverable
                 className="equal-height-card"
+                style={{ display: 'flex', flexDirection: 'column', height: '100%' }}  // Make the card flex and full height
                 cover={
                   item.image ? (
                     <StorageImage 
@@ -97,20 +97,18 @@ const Home = () => {
                   ) : null
                 }
               >
-                
+                <div style={{ flexGrow: 1 }}>  {/* Make the card body grow to fill the remaining space */}
                   <Card.Meta 
                     title={item.title}
                     description={
                       <>
-                        <div>Category: {item.category}</div>
                         <div>{truncateText(item.description, 100)}</div>
                         <div><strong>Price Per Day:</strong> ${item.price_per_day}</div>
                         <div><strong>Condition:</strong> {item.condition}</div>
-                        <div><strong>Availability:</strong> {item.availability}</div>
                       </>
                     }
                   />
-                
+                </div>
               </Card>
               {items.length === index + 1 && <div ref={lastItemRef}></div>}
               </Link>

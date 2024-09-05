@@ -72,7 +72,7 @@ const Navigation = () => {
     <>
       <Layout>
         <Header className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div className="logo" />
+          irentstuff.app
 
           {/* Flex container for menu and buttons */}
           <div style={{ display: 'flex', flex: 1, justifyContent: 'flex-end', alignItems: 'center' }}>
