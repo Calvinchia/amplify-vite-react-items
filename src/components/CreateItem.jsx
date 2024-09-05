@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Layout, Form, Input, Button, Alert, Spin, Select, Upload, message } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { useAuthenticator } from '@aws-amplify/ui-react';
+import { fetchAuthSession } from 'aws-amplify/auth';
 import { uploadData } from 'aws-amplify/storage';  // Import `uploadData` from Amplify Storage
 import { v4 as uuidv4 } from 'uuid';  // Import uuid for generating unique IDs
-
+import { API_URL } from '../constants';
 
 const { Content } = Layout;
 const { Option } = Select;
+
 
 const CreateItem = () => {
   const { user } = useAuthenticator((context) => [context.user]); // Get user info
@@ -26,17 +28,22 @@ const CreateItem = () => {
     }
   }, [user, navigate]);
 
+  
+
   const handleSubmit = async (values) => {
     setError('');
     setLoading(true);
 
     try {
 
+      console.log(user);
+      const session = await fetchAuthSession();
+      console.log("id token", session.tokens.idToken)
+
       // Access the user's session tokens from `user.signInUserSession`
-      const jwtToken = user.signInUserSession.idToken.jwtToken; // Get the JWT token
+      const jwtToken = session.tokens.idToken; // Get the JWT token
 
-
-      const response = await fetch('https://mlkou5mk3a.execute-api.ap-southeast-1.amazonaws.com/dev/items', {
+      const response = await fetch(`${API_URL}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -44,6 +51,7 @@ const CreateItem = () => {
         },
         body: JSON.stringify({
           ...values,
+          owner: "owner",
           image: imageUrl,  // Use the uploaded S3 URL
           created_date: new Date().toISOString(), // Set current date and time
         }),
@@ -54,6 +62,7 @@ const CreateItem = () => {
       }
 
       const createdItem = await response.json(); // Assuming the response contains the newly created item
+      console.log(createdItem);
       setLoading(false);
 
       // Redirect to the item details page
@@ -114,14 +123,7 @@ const CreateItem = () => {
           initialValues={{ condition: 'excellent', availability: 'available' }}
           style={{ width: '100%' }} // Ensure form takes full width
         >
-          <Form.Item
-            label="Owner"
-            name="owner"
-            rules={[{ required: true, message: 'Please input the owner!' }]}
-            style={{ width: '100%' }}
-          >
-            <Input />
-          </Form.Item>
+        
 
           <Form.Item
             label="Title"

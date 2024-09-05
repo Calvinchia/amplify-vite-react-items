@@ -5,6 +5,7 @@ import { UploadOutlined } from '@ant-design/icons';
 import { uploadData } from 'aws-amplify/storage'; // Assuming you are using Amplify's Storage for uploading images
 import { StorageImage } from '@aws-amplify/ui-react-storage';
 import { v4 as uuidv4 } from 'uuid';  // Import uuid for generating unique IDs
+import { API_URL } from '../constants';
 
 const { Content } = Layout;
 const { Option } = Select;
@@ -38,7 +39,7 @@ const UpdateItem = () => {
     const fetchItem = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`https://mlkou5mk3a.execute-api.ap-southeast-1.amazonaws.com/dev/items/${id}`);
+        const response = await fetch(`${API_URL}${id}/`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -93,7 +94,7 @@ const UpdateItem = () => {
     };
 
     try {
-      const response = await fetch(`https://mlkou5mk3a.execute-api.ap-southeast-1.amazonaws.com/dev/items/${id}`, {
+      const response = await fetch(`${API_URL}${id}/`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -119,7 +120,7 @@ const UpdateItem = () => {
     setError('');
     setSuccessMessage('');
     try {
-      const response = await fetch(`https://mlkou5mk3a.execute-api.ap-southeast-1.amazonaws.com/dev/items/${id}`, {
+      const response = await fetch(`${API_URL}${id}/`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'

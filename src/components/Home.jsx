@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { StorageImage } from '@aws-amplify/ui-react-storage';
 import '@aws-amplify/ui-react/styles.css';
 import '../App.css';  // Import the CSS file for styling
+import { API_URL } from '../constants';
 
 const Home = () => {
 
@@ -29,8 +30,9 @@ const Home = () => {
     setError('');
     try {
       const pagelimit = 8;
+
       const response = await fetch(
-        `https://mlkou5mk3a.execute-api.ap-southeast-1.amazonaws.com/dev/items?limit=${pagelimit}&offset=${(currentPage - 1) * pagelimit}`
+        `${API_URL}?limit=${pagelimit}&offset=${(currentPage - 1) * pagelimit}`
       );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
