@@ -6,6 +6,7 @@ import { useAuthenticator } from '@aws-amplify/ui-react';
 import { uploadData } from 'aws-amplify/storage';  // Import `uploadData` from Amplify Storage
 import { v4 as uuidv4 } from 'uuid';  // Import uuid for generating unique IDs
 
+
 const { Content } = Layout;
 const { Option } = Select;
 
@@ -31,17 +32,15 @@ const CreateItem = () => {
 
     try {
 
-      const bodyjson = JSON.stringify({
-        ...values,
-        image: imageUrl,  // Use the uploaded S3 URL
-        created_date: new Date().toISOString(), // Set current date and time
-      })
-      
+      // Access the user's session tokens from `user.signInUserSession`
+      const jwtToken = user.signInUserSession.idToken.jwtToken; // Get the JWT token
+
 
       const response = await fetch('https://mlkou5mk3a.execute-api.ap-southeast-1.amazonaws.com/dev/items', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`,  // Pass the JWT token here
         },
         body: JSON.stringify({
           ...values,
