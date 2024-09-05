@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Layout, Form, Input, Button, Alert, Spin, Row, Col, Select } from 'antd';
+import { Layout, Form, Input, Button, Alert, Spin, Row, Col, Select, Upload, message } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
+import { uploadData } from 'aws-amplify/storage'; // Assuming you are using Amplify's Storage for uploading images
+import { StorageImage } from '@aws-amplify/ui-react-storage';
+import { v4 as uuidv4 } from 'uuid';  // Import uuid for generating unique IDs
 
 const { Content } = Layout;
 const { Option } = Select;
@@ -10,7 +14,9 @@ const UpdateItem = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [form] = Form.useForm();
-  
+
+  const S3_BASE_URL = 'picture-submissions/';
+
   const [item, setItem] = useState({
     owner: '',
     title: '',
@@ -25,6 +31,8 @@ const UpdateItem = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [imageUrl, setImageUrl] = useState('');  // Track the new uploaded image URL
+  const [fileList, setFileList] = useState([]);  // Track the file upload
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -46,16 +54,51 @@ const UpdateItem = () => {
     fetchItem();
   }, [id, form]);
 
+  const handleUpload = async ({ file, onSuccess, onError }) => {
+    try {
+      // Generate unique file name using timestamp and UUID
+      const fileExtension = file.name.split('.').pop();
+      const uniqueFileName = `${Date.now()}-${uuidv4()}.${fileExtension}`;
+
+      // Upload the file to S3 using `uploadData`
+      const result = await uploadData({
+        path: `picture-submissions/${uniqueFileName}`,  // Use the unique filename
+        data: file,
+        options: {
+          contentType: file.type,  // Preserve content type
+          acl: 'public-read',
+        },
+      });
+      setImageUrl(uniqueFileName);  // Set the uploaded image URL
+      onSuccess("ok");
+      message.success(`${file.name} uploaded successfully`);
+    } catch (err) {
+      console.error('Error uploading file:', err);
+      onError(err);
+      message.error(`Failed to upload ${file.name}`);
+    }
+  };
+
+  const handleFileChange = ({ fileList }) => {
+    setFileList(fileList);
+  };
+
   const handleSubmit = async (values) => {
     setError('');
     setSuccessMessage('');
+
+    const updatedValues = {
+      ...values,
+      image: imageUrl || item.image  // Use the new image URL if uploaded, otherwise keep the old one
+    };
+
     try {
       const response = await fetch(`https://mlkou5mk3a.execute-api.ap-southeast-1.amazonaws.com/dev/items/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(values)
+        body: JSON.stringify(updatedValues)
       });
 
       if (!response.ok) {
@@ -191,8 +234,24 @@ const UpdateItem = () => {
 
           <Row gutter={[16, 16]}>
             <Col span={24}>
-              <Form.Item label="Image URL" name="image">
-                <Input />
+              <Form.Item label="Current Image">
+                
+
+                <StorageImage 
+                      alt={item.title} 
+                      path={`${S3_BASE_URL}${item.image}`}
+                      style={{ width: '100%', marginBottom: '16px' }} />
+
+              </Form.Item>
+              <Form.Item label="Upload New Image">
+                <Upload
+                  customRequest={handleUpload}
+                  listType="picture"
+                  fileList={fileList}
+                  onChange={handleFileChange}
+                >
+                  <Button icon={<UploadOutlined />}>Click to Upload</Button>
+                </Upload>
               </Form.Item>
             </Col>
           </Row>

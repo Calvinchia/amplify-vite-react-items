@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Layout, Row, Col, Card, Alert, Spin } from 'antd';
 import { Link } from 'react-router-dom';
+import { StorageImage } from '@aws-amplify/ui-react-storage';
+import '@aws-amplify/ui-react/styles.css';
 import '../App.css';  // Import the CSS file for styling
 
 const Home = () => {
@@ -34,7 +36,16 @@ const Home = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setItems((prevItems) => [...prevItems, ...data.results]);
+      setItems((prevItems) => {
+        // Filter out items that already exist in prevItems
+        const newItems = data.results.filter(
+          newItem => !prevItems.some(prevItem => prevItem.id === newItem.id)
+        );
+        
+        // Append only the new items to the existing list
+        return [...prevItems, ...newItems];
+      });
+      // setItems((prevItems) => [...prevItems, ...data.results]);
       setHasMore(data.results.length > 0);
     } catch (error) {
       setError('Failed to fetch items. Please try again.');
@@ -62,17 +73,31 @@ const Home = () => {
     [loading, hasMore]
   );
 
+  // Base URL for your S3 bucket
+  const S3_BASE_URL = 'picture-submissions/';
+
   return (
     <Layout>
       <Content style={{ padding: '20px' }}>
-        <h2>Items List</h2>
         {error && <Alert message={error} type="error" showIcon />}
         
         <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
           {items.map((item, index) => (
             <Col key={item.id} xs={24} sm={12} md={8} lg={6} className="card-column">
-              <Card hoverable className="equal-height-card">
-                <Link to={`/update/${item.id}`} style={{ textDecoration: 'none' }}>
+              <Link to={`/update/${item.id}`} style={{ textDecoration: 'none' }}>
+              <Card
+                hoverable
+                className="equal-height-card"
+                cover={
+                  item.image ? (
+                    <StorageImage 
+                      alt={item.title} 
+                      path={`${S3_BASE_URL}${item.image}`}
+                      style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
+                  ) : null
+                }
+              >
+                
                   <Card.Meta 
                     title={item.title}
                     description={
@@ -85,9 +110,10 @@ const Home = () => {
                       </>
                     }
                   />
-                </Link>
+                
               </Card>
               {items.length === index + 1 && <div ref={lastItemRef}></div>}
+              </Link>
             </Col>
           ))}
         </Row>
