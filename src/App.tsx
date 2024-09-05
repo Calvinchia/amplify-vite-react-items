@@ -6,14 +6,8 @@ import UpdateItem from './components/UpdateItem';
 import Navigation from './components/Navigation';
 import LoginPage from './components/LoginPage';
 
-const localapi = "http://127.0.0.1:8000/main/"
-const awsapi = "https://mlkou5mk3a.execute-api.ap-southeast-1.amazonaws.com/dev/items"
-const setapi = localapi;
-
 
 function App() {
-
-
 
   return (
 
