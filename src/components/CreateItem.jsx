@@ -36,9 +36,7 @@ const CreateItem = () => {
 
     try {
 
-      console.log(user);
       const session = await fetchAuthSession();
-      console.log("id token", session.tokens.idToken)
 
       // Access the user's session tokens from `user.signInUserSession`
       const jwtToken = session.tokens.idToken; // Get the JWT token

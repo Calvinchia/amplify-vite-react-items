@@ -6,6 +6,7 @@ import { uploadData } from 'aws-amplify/storage'; // Assuming you are using Ampl
 import { StorageImage } from '@aws-amplify/ui-react-storage';
 import { v4 as uuidv4 } from 'uuid';  // Import uuid for generating unique IDs
 import { API_URL } from '../constants';
+import { fetchAuthSession } from 'aws-amplify/auth';
 
 const { Content } = Layout;
 const { Option } = Select;
@@ -88,6 +89,11 @@ const UpdateItem = () => {
     setError('');
     setSuccessMessage('');
 
+    const session = await fetchAuthSession();
+
+    // Access the user's session tokens from `user.signInUserSession`
+    const jwtToken = session.tokens.idToken; // Get the JWT token
+
     const updatedValues = {
       ...values,
       image: imageUrl || item.image  // Use the new image URL if uploaded, otherwise keep the old one
@@ -97,7 +103,8 @@ const UpdateItem = () => {
       const response = await fetch(`${API_URL}${id}/`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`,  // Pass the JWT token here
         },
         body: JSON.stringify(updatedValues)
       });
@@ -123,7 +130,8 @@ const UpdateItem = () => {
       const response = await fetch(`${API_URL}${id}/`, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`,  // Pass the JWT token here
         }
       });
 
