@@ -75,7 +75,7 @@ const Home = () => {
   );
 
   // Base URL for your S3 bucket
-  const S3_BASE_URL = 'picture-submissions/';
+  const S3_BASE_URL = 'https://irsimages.s3.ap-southeast-1.amazonaws.com/picture-submissions/';
 
   return (
     <Layout>
@@ -92,10 +92,12 @@ const Home = () => {
                 style={{ display: 'flex', flexDirection: 'column', height: '100%' }}  // Make the card flex and full height
                 cover={
                   item.image ? (
-                    <StorageImage 
-                      alt={item.title} 
-                      path={`${S3_BASE_URL}${item.image}`}
+                    <img 
+                      src={`${S3_BASE_URL}${item.image}`}
+                      alt={item.title}
                       style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
+
+                   
                   ) : null
                 }
               >
