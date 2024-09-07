@@ -17,7 +17,7 @@ const UpdateItem = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
 
-  const S3_BASE_URL = 'picture-submissions/';
+  const S3_BASE_URL = "https://irsimages.s3.ap-southeast-1.amazonaws.com/picture-submissions/";
 
   const [item, setItem] = useState({
     owner: '',
@@ -245,11 +245,11 @@ const UpdateItem = () => {
             <Col span={24}>
               <Form.Item label="Current Image">
                 
+              <img 
+                      src={`${S3_BASE_URL}${item.image}`}
+                      alt={item.title}
+                      style={{ width: '100%', height: '300px', objectFit: 'contain', marginBottom: '16px' }} />
 
-                <StorageImage 
-                      alt={item.title} 
-                      path={`${S3_BASE_URL}${item.image}`}
-                      style={{ width: '100%', marginBottom: '16px' }} />
 
               </Form.Item>
               <Form.Item label="Upload New Image">
