@@ -37,11 +37,7 @@ const Home = () => {
 
   const fetchItems = useCallback(async () => {
 
-    const session = await fetchAuthSession();
-
-    // Access the user's session tokens from `user.signInUserSession`
-    const jwtToken = session.tokens.idToken; // Get the JWT token
-
+  
 
     setLoading(true);
     setError('');
