@@ -100,6 +100,12 @@ const UpdateItem = () => {
     };
 
     try {
+
+      const session = await fetchAuthSession();
+
+    // Access the user's session tokens from `user.signInUserSession`
+    const jwtToken = session.tokens.idToken; // Get the JWT token
+
       const response = await fetch(`${API_URL}${id}/`, {
         method: 'PUT',
         headers: {
@@ -114,7 +120,7 @@ const UpdateItem = () => {
       }
 
       setSuccessMessage('Item updated successfully!');
-      navigate('/');
+      //navigate('/');
     } catch (error) {
       setError('Failed to update item. Please try again.');
     }
@@ -127,6 +133,12 @@ const UpdateItem = () => {
     setError('');
     setSuccessMessage('');
     try {
+
+      const session = await fetchAuthSession();
+
+    // Access the user's session tokens from `user.signInUserSession`
+    const jwtToken = session.tokens.idToken; // Get the JWT token
+
       const response = await fetch(`${API_URL}${id}/`, {
         method: 'DELETE',
         headers: {
@@ -139,10 +151,12 @@ const UpdateItem = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
+      // After delete, pass the success message and navigate to the home page
       setSuccessMessage('Item deleted successfully!');
-      navigate('/');
+      navigate('/', { state: { successMessage: 'Item deleted successfully!' } });
     } catch (error) {
       setError('Failed to delete item. Please try again.');
+      console.log(error)
     }
   };
 

@@ -1,12 +1,22 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Layout, Row, Col, Card, Alert, Spin } from 'antd';
-import { Link } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { StorageImage } from '@aws-amplify/ui-react-storage';
 import '@aws-amplify/ui-react/styles.css';
 import '../App.css';  // Import the CSS file for styling
 import { API_URL } from '../constants';
+import { fetchAuthSession } from 'aws-amplify/auth';
 
 const Home = () => {
+  const location = useLocation();
+  const successMessage = location.state?.successMessage;
+
+  useEffect(() => {
+    if (successMessage) {
+        // Display the message (you can use a state or directly show it)
+        console.log(successMessage);
+    }
+}, [successMessage]);
 
   const { Content } = Layout;
   
@@ -26,6 +36,13 @@ const Home = () => {
   };
 
   const fetchItems = useCallback(async () => {
+
+    const session = await fetchAuthSession();
+
+    // Access the user's session tokens from `user.signInUserSession`
+    const jwtToken = session.tokens.idToken; // Get the JWT token
+
+
     setLoading(true);
     setError('');
     try {
@@ -81,6 +98,11 @@ const Home = () => {
     <Layout>
       <Content style={{ padding: '20px' }}>
         {error && <Alert message={error} type="error" showIcon />}
+
+        <div>
+            {successMessage && <div className="alert alert-success">{successMessage}</div>}
+            {/* The rest of your home page */}
+        </div>
         
         <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
           {items.map((item, index) => (
