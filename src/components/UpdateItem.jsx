@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Layout, Form, Input, Button, Alert, Spin, Row, Col, Select, Upload, message } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { uploadData } from 'aws-amplify/storage'; // Assuming you are using Amplify's Storage for uploading images
-import { StorageImage } from '@aws-amplify/ui-react-storage';
 import { v4 as uuidv4 } from 'uuid';  // Import uuid for generating unique IDs
 import { API_URL } from '../constants';
 import { fetchAuthSession } from 'aws-amplify/auth';
@@ -20,7 +19,6 @@ const UpdateItem = () => {
   const S3_BASE_URL = "https://irsimages.s3.ap-southeast-1.amazonaws.com/picture-submissions/";
 
   const [item, setItem] = useState({
-    owner: '',
     title: '',
     description: '',
     category: '',
@@ -30,10 +28,11 @@ const UpdateItem = () => {
     deposit: '',
     image: ''
   });
+  const [originalItem, setOriginalItem] = useState({}); // To store the original item for comparison
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [imageUrl, setImageUrl] = useState('');  // Track the new uploaded image URL
+  const [newImageFile, setNewImageFile] = useState(null);  // Track the new image file
   const [fileList, setFileList] = useState([]);  // Track the file upload
 
   useEffect(() => {
@@ -46,6 +45,7 @@ const UpdateItem = () => {
         }
         const data = await response.json();
         setItem(data);
+        setOriginalItem(data); // Store the original item
         form.setFieldsValue(data);
       } catch (error) {
         setError('Failed to fetch item details. Please try again.');
@@ -56,14 +56,25 @@ const UpdateItem = () => {
     fetchItem();
   }, [id, form]);
 
-  const handleUpload = async ({ file, onSuccess, onError }) => {
+  // Handle file change and store the selected file in state, don't upload immediately
+  const handleFileChange = ({ fileList }) => {
+    if (fileList.length > 0) {
+      setNewImageFile(fileList[0].originFileObj); // Save the file in state
+    } else {
+      setNewImageFile(null); // No file selected
+    }
+    setFileList(fileList);
+  };
+
+  // Upload image to S3 only when update button is pressed
+  const uploadImageToS3 = async (file) => {
     try {
       // Generate unique file name using timestamp and UUID
       const fileExtension = file.name.split('.').pop();
       const uniqueFileName = `${Date.now()}-${uuidv4()}.${fileExtension}`;
 
       // Upload the file to S3 using `uploadData`
-      const result = await uploadData({
+      await uploadData({
         path: `picture-submissions/${uniqueFileName}`,  // Use the unique filename
         data: file,
         options: {
@@ -71,18 +82,13 @@ const UpdateItem = () => {
           acl: 'public-read',
         },
       });
-      setImageUrl(uniqueFileName);  // Set the uploaded image URL
-      onSuccess("ok");
-      message.success(`${file.name} uploaded successfully`);
+
+      return uniqueFileName;  // Return the S3 key (file name)
     } catch (err) {
       console.error('Error uploading file:', err);
-      onError(err);
       message.error(`Failed to upload ${file.name}`);
+      throw err;
     }
-  };
-
-  const handleFileChange = ({ fileList }) => {
-    setFileList(fileList);
   };
 
   const handleSubmit = async (values) => {
@@ -90,24 +96,31 @@ const UpdateItem = () => {
     setSuccessMessage('');
 
     const session = await fetchAuthSession();
-
-    // Access the user's session tokens from `user.signInUserSession`
     const jwtToken = session.tokens.idToken; // Get the JWT token
 
-    const updatedValues = {
-      ...values,
-      image: imageUrl || item.image  // Use the new image URL if uploaded, otherwise keep the old one
-    };
+    // Compare original values and only send the changed fields
+    const updatedValues = {};
+    Object.keys(values).forEach(key => {
+      if (values[key] !== originalItem[key]) {
+        updatedValues[key] = values[key];
+      }
+    });
 
+    // Upload the image only if a new image has been selected
+    if (newImageFile) {
+      try {
+        const uploadedImageKey = await uploadImageToS3(newImageFile);
+        updatedValues.image = uploadedImageKey; // Update the image URL after upload
+      } catch (err) {
+        setError('Failed to upload the image. Please try again.');
+        return;
+      }
+    }
+
+    // Send PATCH request with only the changed fields
     try {
-
-      const session = await fetchAuthSession();
-
-    // Access the user's session tokens from `user.signInUserSession`
-    const jwtToken = session.tokens.idToken; // Get the JWT token
-
       const response = await fetch(`${API_URL}${id}/`, {
-        method: 'PUT',
+        method: 'PATCH',  // Use PATCH instead of PUT
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${jwtToken}`,  // Pass the JWT token here
@@ -120,7 +133,7 @@ const UpdateItem = () => {
       }
 
       setSuccessMessage('Item updated successfully!');
-      //navigate('/');
+      navigate('/', { state: { successMessage: 'Item updated successfully!' } });
     } catch (error) {
       setError('Failed to update item. Please try again.');
     }
@@ -133,11 +146,8 @@ const UpdateItem = () => {
     setError('');
     setSuccessMessage('');
     try {
-
       const session = await fetchAuthSession();
-
-    // Access the user's session tokens from `user.signInUserSession`
-    const jwtToken = session.tokens.idToken; // Get the JWT token
+      const jwtToken = session.tokens.idToken; // Get the JWT token
 
       const response = await fetch(`${API_URL}${id}/`, {
         method: 'DELETE',
@@ -151,12 +161,10 @@ const UpdateItem = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // After delete, pass the success message and navigate to the home page
       setSuccessMessage('Item deleted successfully!');
       navigate('/', { state: { successMessage: 'Item deleted successfully!' } });
     } catch (error) {
       setError('Failed to delete item. Please try again.');
-      console.log(error)
     }
   };
 
@@ -181,14 +189,6 @@ const UpdateItem = () => {
           onFinish={handleSubmit}
           initialValues={item}
         >
-          <Row gutter={[16, 16]}>
-            <Col span={24}>
-              <Form.Item label="Owner" name="owner" rules={[{ required: true, message: 'Please input the owner!' }]}>
-                <Input />
-              </Form.Item>
-            </Col>
-          </Row>
-          
           <Row gutter={[16, 16]}>
             <Col span={24}>
               <Form.Item label="Title" name="title" rules={[{ required: true, message: 'Please input the title!' }]}>
@@ -258,17 +258,14 @@ const UpdateItem = () => {
           <Row gutter={[16, 16]}>
             <Col span={24}>
               <Form.Item label="Current Image">
-                
-              <img 
-                      src={`${S3_BASE_URL}${item.image}`}
-                      alt={item.title}
-                      style={{ width: '100%', height: '300px', objectFit: 'contain', marginBottom: '16px' }} />
-
-
+                <img 
+                  src={`${S3_BASE_URL}${item.image}`}
+                  alt={item.title}
+                  style={{ width: '100%', height: '300px', objectFit: 'contain', marginBottom: '16px' }}
+                />
               </Form.Item>
               <Form.Item label="Upload New Image">
                 <Upload
-                  customRequest={handleUpload}
                   listType="picture"
                   fileList={fileList}
                   onChange={handleFileChange}
