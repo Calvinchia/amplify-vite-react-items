@@ -11,7 +11,6 @@ import { API_URL } from '../constants';
 const { Content } = Layout;
 const { Option } = Select;
 
-
 const CreateItem = () => {
   const { user } = useAuthenticator((context) => [context.user]); // Get user info
   const navigate = useNavigate(); // For redirecting
@@ -20,6 +19,25 @@ const CreateItem = () => {
   const [error, setError] = useState('');
   const [imageUrl, setImageUrl] = useState('');  // Store S3 URL after upload
   const [imageUploaded, setImageUploaded] = useState(false); // Track image upload status
+  const [categories, setCategories] = useState([]); // Store categories
+
+  // Fetch categories from API when component mounts
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${API_URL}cat`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setCategories(data);
+      } catch (error) {
+        console.error('Error fetching categories:', error.message);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // Redirect to home if the user is not authenticated
   useEffect(() => {
@@ -28,17 +46,12 @@ const CreateItem = () => {
     }
   }, [user, navigate]);
 
-  
-
   const handleSubmit = async (values) => {
     setError('');
     setLoading(true);
 
     try {
-
       const session = await fetchAuthSession();
-
-      // Access the user's session tokens from `user.signInUserSession`
       const jwtToken = session.tokens.idToken; // Get the JWT token
 
       const response = await fetch(`${API_URL}`, {
@@ -49,7 +62,7 @@ const CreateItem = () => {
         },
         body: JSON.stringify({
           ...values,
-          owner: "owner",
+          owner: user.username, // Use the authenticated user's username
           image: imageUrl,  // Use the uploaded S3 URL
           created_date: new Date().toISOString(), // Set current date and time
         }),
@@ -89,7 +102,7 @@ const CreateItem = () => {
         },
       });
 
-        console.log(result)
+      console.log(result)
       // Use the result to get the S3 URL
       const s3Url = result.url;
 
@@ -121,8 +134,6 @@ const CreateItem = () => {
           initialValues={{ condition: 'excellent', availability: 'available' }}
           style={{ width: '100%' }} // Ensure form takes full width
         >
-        
-
           <Form.Item
             label="Title"
             name="title"
@@ -144,10 +155,16 @@ const CreateItem = () => {
           <Form.Item
             label="Category"
             name="category"
-            rules={[{ required: true, message: 'Please input the category!' }]}
+            rules={[{ required: true, message: 'Please select a category!' }]}
             style={{ width: '100%' }}
           >
-            <Input />
+            <Select>
+              {categories.map((category) => (
+                <Option key={category.id} value={category.id}>
+                  {category.name}
+                </Option>
+              ))}
+            </Select>
           </Form.Item>
 
           <Form.Item
