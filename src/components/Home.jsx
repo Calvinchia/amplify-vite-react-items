@@ -4,7 +4,7 @@ import { useLocation, Link } from 'react-router-dom';
 import { StorageImage } from '@aws-amplify/ui-react-storage';
 import '@aws-amplify/ui-react/styles.css';
 import '../App.css';  // Import the CSS file for styling
-import { API_URL } from '../constants';
+import { API_URL, S3_BASE_URL } from '../constants';
 import { fetchAuthSession } from 'aws-amplify/auth';
 
 const Home = () => {
@@ -87,8 +87,6 @@ const Home = () => {
     [loading, hasMore]
   );
 
-  // Base URL for your S3 bucket
-  const S3_BASE_URL = 'https://irsimages.s3.ap-southeast-1.amazonaws.com/picture-submissions/';
 
   return (
     <Layout>
@@ -103,7 +101,7 @@ const Home = () => {
         <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
           {items.map((item, index) => (
             <Col key={item.id} xs={24} sm={12} md={8} lg={6} className="card-column">
-              <Link to={`/update/${item.id}`} style={{ textDecoration: 'none' }}>
+              <Link to={`/details/${item.id}`} style={{ textDecoration: 'none' }}>
               <Card
                 hoverable
                 className="equal-height-card"

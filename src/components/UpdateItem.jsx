@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Layout, Form, Input, Button, Alert, Spin, Row, Col, Select, Upload, message } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
-import { uploadData } from 'aws-amplify/storage'; // Assuming you are using Amplify's Storage for uploading images
+import { uploadData } from 'aws-amplify/storage';  // Amplify's Storage for uploading images
 import { v4 as uuidv4 } from 'uuid';  // Import uuid for generating unique IDs
-import { API_URL } from '../constants';
+import { API_URL, S3_BASE_URL } from '../constants';
 import { fetchAuthSession } from 'aws-amplify/auth';
 
 const { Content } = Layout;
@@ -16,8 +16,6 @@ const UpdateItem = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
 
-  const S3_BASE_URL = "https://irsimages.s3.ap-southeast-1.amazonaws.com/picture-submissions/";
-
   const [item, setItem] = useState({
     title: '',
     description: '',
@@ -28,35 +26,73 @@ const UpdateItem = () => {
     deposit: '',
     image: ''
   });
-  const [originalItem, setOriginalItem] = useState({}); // To store the original item for comparison
+  const [originalItem, setOriginalItem] = useState({}); // Store the original item
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [newImageFile, setNewImageFile] = useState(null);  // Track the new image file
   const [fileList, setFileList] = useState([]);  // Track the file upload
+  const [categories, setCategories] = useState([]);  // Store the list of categories
+  const [selectedCategoryId, setSelectedCategoryId] = useState(''); // Store selected category id
 
   useEffect(() => {
-    const fetchItem = async () => {
-      setLoading(true);
+    // Fetch the list of categories
+    const fetchCategories = async () => {
       try {
-        const response = await fetch(`${API_URL}${id}/`);
+        const response = await fetch(`${API_URL}cat`);
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          throw new Error('Failed to fetch categories.');
         }
         const data = await response.json();
-        setItem(data);
-        setOriginalItem(data); // Store the original item
-        form.setFieldsValue(data);
+        setCategories(data); // Set the categories from the API response
       } catch (error) {
-        setError('Failed to fetch item details. Please try again.');
-      } finally {
-        setLoading(false);
+        setError('Failed to fetch categories. Please try again.');
       }
     };
-    fetchItem();
-  }, [id, form]);
 
-  // Handle file change and store the selected file in state, don't upload immediately
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    // Only call fetchItem when categories are loaded (i.e., categories is not empty)
+    if (categories.length > 0) {
+      // Fetch item details for the update form
+      const fetchItem = async () => {
+        setLoading(true);
+        try {
+          const response = await fetch(`${API_URL}${id}/`);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+          setItem(data);
+          setOriginalItem(data); // Store the original item for comparison
+
+          // Fetch the user's session to check if they are the owner
+          const session = await fetchAuthSession();
+          const currentUserSub = session.userSub;
+
+          if (data.owner !== currentUserSub) {
+            // Redirect to home if the user is not the owner
+            navigate('/');
+          }
+
+          // Set the selected category ID (category from the fetched item)
+          setSelectedCategoryId(data.category);
+
+          // Pre-fill the form with the fetched item data
+          form.setFieldsValue(data);
+        } catch (error) {
+          setError('Failed to fetch item details. Please try again.');
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchItem();
+    }
+  }, [categories, id, form, navigate]);
+
+  // Handle file change and store the selected file in state
   const handleFileChange = ({ fileList }) => {
     if (fileList.length > 0) {
       setNewImageFile(fileList[0].originFileObj); // Save the file in state
@@ -69,11 +105,9 @@ const UpdateItem = () => {
   // Upload image to S3 only when update button is pressed
   const uploadImageToS3 = async (file) => {
     try {
-      // Generate unique file name using timestamp and UUID
       const fileExtension = file.name.split('.').pop();
       const uniqueFileName = `${Date.now()}-${uuidv4()}.${fileExtension}`;
 
-      // Upload the file to S3 using `uploadData`
       await uploadData({
         path: `picture-submissions/${uniqueFileName}`,  // Use the unique filename
         data: file,
@@ -83,14 +117,14 @@ const UpdateItem = () => {
         },
       });
 
-      return uniqueFileName;  // Return the S3 key (file name)
+      return uniqueFileName;
     } catch (err) {
-      console.error('Error uploading file:', err);
       message.error(`Failed to upload ${file.name}`);
       throw err;
     }
   };
 
+  // Handle form submission
   const handleSubmit = async (values) => {
     setError('');
     setSuccessMessage('');
@@ -100,42 +134,44 @@ const UpdateItem = () => {
 
     // Compare original values and only send the changed fields
     const updatedValues = {};
-    Object.keys(values).forEach(key => {
+    Object.keys(values).forEach((key) => {
       if (values[key] !== originalItem[key]) {
         updatedValues[key] = values[key];
       }
     });
 
+    
     // Upload the image only if a new image has been selected
     if (newImageFile) {
       try {
         const uploadedImageKey = await uploadImageToS3(newImageFile);
-        updatedValues.image = uploadedImageKey; // Update the image URL after upload
+        updatedValues.image = uploadedImageKey;
       } catch (err) {
         setError('Failed to upload the image. Please try again.');
         return;
       }
     }
 
-    // Send PATCH request with only the changed fields
-    try {
-      const response = await fetch(`${API_URL}${id}/`, {
-        method: 'PATCH',  // Use PATCH instead of PUT
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${jwtToken}`,  // Pass the JWT token here
-        },
-        body: JSON.stringify(updatedValues)
-      });
+    if (Object.keys(updatedValues).length > 0) {
+      try {
+        const response = await fetch(`${API_URL}${id}/`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${jwtToken}`,
+          },
+          body: JSON.stringify(updatedValues),
+        });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        setSuccessMessage('Item updated successfully!');
+        navigate('/', { state: { successMessage: 'Item updated successfully!' } });
+      } catch (error) {
+        setError('Failed to update item. Please try again.');
       }
-
-      setSuccessMessage('Item updated successfully!');
-      navigate('/', { state: { successMessage: 'Item updated successfully!' } });
-    } catch (error) {
-      setError('Failed to update item. Please try again.');
     }
   };
 
@@ -143,8 +179,6 @@ const UpdateItem = () => {
     if (!window.confirm('Are you sure you want to delete this item?')) {
       return;
     }
-    setError('');
-    setSuccessMessage('');
     try {
       const session = await fetchAuthSession();
       const jwtToken = session.tokens.idToken; // Get the JWT token
@@ -153,8 +187,8 @@ const UpdateItem = () => {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${jwtToken}`,  // Pass the JWT token here
-        }
+          'Authorization': `Bearer ${jwtToken}`,
+        },
       });
 
       if (!response.ok) {
@@ -182,7 +216,7 @@ const UpdateItem = () => {
         <h2>Update Item</h2>
         {error && <Alert message={error} type="error" showIcon />}
         {successMessage && <Alert message={successMessage} type="success" showIcon />}
-        
+
         <Form
           form={form}
           layout="vertical"
@@ -196,7 +230,7 @@ const UpdateItem = () => {
               </Form.Item>
             </Col>
           </Row>
-          
+
           <Row gutter={[16, 16]}>
             <Col span={24}>
               <Form.Item label="Description" name="description" rules={[{ required: true, message: 'Please input the description!' }]}>
@@ -207,8 +241,17 @@ const UpdateItem = () => {
 
           <Row gutter={[16, 16]}>
             <Col span={24}>
-              <Form.Item label="Category" name="category" rules={[{ required: true, message: 'Please input the category!' }]}>
-                <Input />
+              <Form.Item label="Category" name="category" rules={[{ required: true, message: 'Please select a category!' }]}>
+                <Select
+                  placeholder="Select a category"
+                  onChange={(value) => setSelectedCategoryId(value)}
+                >
+                  {categories.map((cat) => (
+                    <Option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </Option>
+                  ))}
+                </Select>
               </Form.Item>
             </Col>
           </Row>
@@ -258,7 +301,7 @@ const UpdateItem = () => {
           <Row gutter={[16, 16]}>
             <Col span={24}>
               <Form.Item label="Current Image">
-                <img 
+                <img
                   src={`${S3_BASE_URL}${item.image}`}
                   alt={item.title}
                   style={{ width: '100%', height: '300px', objectFit: 'contain', marginBottom: '16px' }}
@@ -266,9 +309,11 @@ const UpdateItem = () => {
               </Form.Item>
               <Form.Item label="Upload New Image">
                 <Upload
+                
                   listType="picture"
                   fileList={fileList}
                   onChange={handleFileChange}
+                  beforeUpload={() => false}
                 >
                   <Button icon={<UploadOutlined />}>Click to Upload</Button>
                 </Upload>
