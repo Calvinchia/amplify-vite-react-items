@@ -17,8 +17,7 @@ const CreateItem = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [imageUrl, setImageUrl] = useState('');  // Store S3 URL after upload
-  const [imageUploaded, setImageUploaded] = useState(false); // Track image upload status
+  const [imageFile, setImageFile] = useState(null);  // Store selected image file
   const [categories, setCategories] = useState([]); // Store categories
 
   // Fetch categories from API when component mounts
@@ -51,6 +50,24 @@ const CreateItem = () => {
     setLoading(true);
 
     try {
+      // Upload the image to S3
+      let imageUrl = '';
+      if (imageFile) {
+        const fileExtension = imageFile.name.split('.').pop();
+        const uniqueFileName = `${Date.now()}-${uuidv4()}.${fileExtension}`;
+
+        const result = await uploadData({
+          path: `picture-submissions/${uniqueFileName}`,  // Use the unique filename
+          data: imageFile,
+          options: {
+            contentType: imageFile.type,  // Preserve content type
+            acl: 'public-read',
+          },
+        });
+
+        imageUrl = uniqueFileName;  // Set the uploaded image URL
+      }
+
       const session = await fetchAuthSession();
       const jwtToken = session.tokens.idToken; // Get the JWT token
 
@@ -85,36 +102,9 @@ const CreateItem = () => {
     }
   };
 
-  // Handle the image upload to S3 using `uploadData` with a unique filename
-  const handleUpload = async ({ file, onSuccess, onError }) => {
-    try {
-      // Generate unique file name using timestamp and UUID
-      const fileExtension = file.name.split('.').pop();
-      const uniqueFileName = `${Date.now()}-${uuidv4()}.${fileExtension}`;
-
-      // Upload the file to S3 using `uploadData`
-      const result = await uploadData({
-        path: `picture-submissions/${uniqueFileName}`,  // Use the unique filename
-        data: file,
-        options: {
-          contentType: file.type,  // Preserve content type
-          acl: 'public-read',
-        },
-      });
-
-      console.log(result)
-      // Use the result to get the S3 URL
-      const s3Url = result.url;
-
-      setImageUrl(uniqueFileName);  // Set the uploaded image URL
-      setImageUploaded(true);  // Mark the image as uploaded
-      onSuccess("ok");
-      message.success(`${file.name} uploaded successfully`);
-    } catch (err) {
-      console.error('Error uploading file:', err);
-      onError(err);
-      message.error(`Failed to upload ${file.name}`);
-    }
+  // Handle the image selection
+  const handleImageChange = ({ file }) => {
+    setImageFile(file);
   };
 
   // Return null while redirecting
@@ -213,10 +203,11 @@ const CreateItem = () => {
             <Input type="number" />
           </Form.Item>
 
-          {/* Image uploader to S3 */}
+          {/* Image uploader */}
           <Form.Item label="Upload Image" required>
             <Upload
-              customRequest={handleUpload}
+              beforeUpload={() => false}  // Prevent automatic upload
+              onChange={handleImageChange}
               listType="picture"
               accept="image/*" 
               maxCount={1}
@@ -229,7 +220,7 @@ const CreateItem = () => {
             <Button
               type="primary"
               htmlType="submit"
-              disabled={loading || !imageUploaded}  // Only enable button if image is uploaded
+              disabled={loading}  // Only enable button if not loading
               block
             >
               {loading ? <Spin size="small" /> : 'Create Item'}
