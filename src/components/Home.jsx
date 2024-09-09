@@ -42,25 +42,30 @@ const Home = ({ ownerType }) => {
 
   const fetchItems = useCallback(async () => {
 
-    
+    const sessionheader = {
+      'Content-Type': 'application/json'
+    };
 
+    try {
     const { username, userId, signInDetails } = await getCurrentUser();
+    if (userId) {
+      const session = await fetchAuthSession();
+      const jwtToken = session.tokens.idToken;
+
+      sessionheader.Authorization = `Bearer ${jwtToken}`;
+
+    }
+    } catch (error) {
+      console.error('Error fetching user:', error.message)
+    }
 
     setLoading(true);
     setError('');
     try {
       const pagelimit = 8;
 
-      const sessionheader = {
-        'Content-Type': 'application/json'
-      };
-      if (userId) {
-        const session = await fetchAuthSession();
-        const jwtToken = session.tokens.idToken;
-
-        sessionheader.Authorization = `Bearer ${jwtToken}`;
-
-      }
+      
+     
 
 
       const response = await fetch(
