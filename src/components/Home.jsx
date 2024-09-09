@@ -56,7 +56,7 @@ const Home = ({ ownerType }) => {
 
     }
     } catch (error) {
-      console.error('Error fetching user:', error.message)
+      //console.error('Error fetching user:', error.message)
     }
 
     setLoading(true);
