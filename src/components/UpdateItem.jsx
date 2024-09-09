@@ -65,6 +65,7 @@ const UpdateItem = () => {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
           const data = await response.json();
+          data.category = Number(data.category); // Convert category to number
           setItem(data);
           setOriginalItem(data); // Store the original item for comparison
 

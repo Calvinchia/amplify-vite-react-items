@@ -141,7 +141,8 @@ function App() {
         <div className="App">
           <Navigation />
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Home ownerType="others" />} />
+            <Route path="/mystuff" element={<Home ownerType="me" />} />
             <Route path="/details/:id" element={<ItemDetails />} />
             <Route path="/create" element={<CreateItem />} />
             <Route path="/update/:id" element={<UpdateItem />} />

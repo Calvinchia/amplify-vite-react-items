@@ -23,10 +23,12 @@ const Navigation = () => {
     };
   }, []);
 
-  // Close modal if user is signed in
+  // Close modal if user is signed in and reload the page only if it hasn't been done already
   useEffect(() => {
-    if (user) {
+    if (user && !sessionStorage.getItem('reloaded')) {
       setIsModalOpen(false); // Close modal when the user signs in
+      sessionStorage.setItem('reloaded', 'true'); // Set a flag in sessionStorage to prevent infinite reloads
+      window.location.reload(); // Reload the page after successful login
     }
   }, [user]);
 
@@ -50,17 +52,23 @@ const Navigation = () => {
     setIsModalOpen(false);
   };
 
+  // Function to sign out and reload page
+  const handleSignOut = async () => {
+    await signOut(); // Sign out the user
+    sessionStorage.removeItem('reloaded'); // Remove the flag from sessionStorage on sign out
+    window.location.reload(); // Reload the page after sign out
+  };
+
   // Menu items that collapse into the hamburger menu on mobile
-  const menuItems = [
-    {
-      key: '1',
-      label: <Link to="/">Stuff</Link>,
-    },
-  ];
+  const menuItems = [];
 
   // Add authenticated user items
   if (user) {
     menuItems.push(
+      {
+        key: '1',
+        label: <Link to="/mystuff">My Stuff</Link>,
+      },
       {
         key: '2',
         label: <Link to="/create">Create Item</Link>,
@@ -74,7 +82,6 @@ const Navigation = () => {
         <Header className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           
         <Link to="/" style={{ color: 'inherit', textDecoration: 'none' }}>irentstuff.app</Link>
-
 
           {/* Flex container for menu and buttons */}
           <div style={{ display: 'flex', flex: 1, justifyContent: 'flex-end', alignItems: 'center' }}>
@@ -90,7 +97,7 @@ const Navigation = () => {
 
             {/* Log in / Sign out button remains visible regardless of mobile or desktop */}
             {user ? (
-              <Button type="primary" onClick={signOut} style={{ marginLeft: '10px' }}>
+              <Button type="primary" onClick={handleSignOut} style={{ marginLeft: '10px' }}>
                 Sign out
               </Button>
             ) : (
@@ -113,7 +120,6 @@ const Navigation = () => {
         placement="right"
         onClose={handleCloseDrawer}
         open={isDrawerOpen}
-        //bodyStyle={{ padding: 0 }}
       >
         <Menu mode="vertical" items={menuItems} onClick={handleCloseDrawer} />
         {!user && (
