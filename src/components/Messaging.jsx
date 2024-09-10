@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Amplify } from 'aws-amplify';
 import { fetchUserAttributes } from 'aws-amplify/auth';
+import { getCurrentUser } from 'aws-amplify/auth';
+import { fetchAuthSession } from 'aws-amplify/auth';
 import { withAuthenticator } from '@aws-amplify/ui-react';
 import { Input, Button, Card, Layout, Typography, Space, Avatar } from 'antd';
 import { SendOutlined, UserOutlined } from '@ant-design/icons';
@@ -19,7 +21,7 @@ function Messaging({ signOut }) {
   const messagesEndRef = useRef(null); // Initialize messagesEndRef using useRef
   const [isReconnecting, setIsReconnecting] = useState(false); // Track reconnection status
 
-  const WEBSOCKET_URL = 'wss://6z72j61l2b.execute-api.ap-southeast-1.amazonaws.com/dev/';
+  const WEBSOCKET_URL = 'wss://6z72j61l2b.execute-api.ap-southeast-1.amazonaws.com/dev';
 
   // Fetch the user ID when the component mounts
   useEffect(() => {
@@ -30,18 +32,39 @@ function Messaging({ signOut }) {
     getUserAttributes();
   }, []);
 
-  const connectWebSocket = () => {
+  const connectWebSocket = async () => {
     // Check if ws already exists and is in an invalid state before reconnecting
     if (ws.current && (ws.current.readyState === WebSocket.OPEN || ws.current.readyState === WebSocket.CONNECTING)) {
       return;
     }
 
-    ws.current = new WebSocket(WEBSOCKET_URL);
+    let websocketurl = WEBSOCKET_URL;
+    try {
+      const { username, userId, signInDetails } = await getCurrentUser();
+      if (userId) {
+        const session = await fetchAuthSession();
+        const jwtToken = session.tokens.idToken;
+
+        websocketurl = `${WEBSOCKET_URL}?token=${jwtToken}`;
+
+
+      } else {
+        console.log('No user id');
+      }
+    } catch (error) {
+      console.error('Error fetching user:', error.message)
+    }
+
+    ws.current = new WebSocket(websocketurl);
 
     ws.current.onopen = () => {
       console.log('WebSocket connected');
+      try {
       ws.current.send(JSON.stringify({ action: 'getmessages', itemId: '888' }));
       setIsReconnecting(false);
+      } catch (error) {
+        //console.error('Error fetching user:', error.message)
+      }
     };
 
     ws.current.onmessage = (event) => {
