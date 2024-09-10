@@ -12,8 +12,8 @@
     padding: 5px;
   }
 
-  .ant-card-body {
-    padding: 10px !important;
+  .messaging-content .ant-card-body {
+    padding: 0px;
   }
   
   .messages-card {
@@ -24,6 +24,7 @@
     flex-direction: column;
     border-radius: 10px;
     overflow: hidden;
+    border:1px solid rgb(206, 206, 206);
 
   }
   
@@ -32,7 +33,7 @@
     overflow: auto; /* Enable vertical scrolling */
     padding: 15px;
     background-color: #e5ddd5;
-    height: 70vh; /* Ensure it doesn't exceed the available space */
+    height: 74vh; /* Ensure it doesn't exceed the available space */
 
 
   }

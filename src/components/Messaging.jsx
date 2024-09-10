@@ -4,8 +4,8 @@ import { fetchUserAttributes } from 'aws-amplify/auth';
 import { withAuthenticator } from '@aws-amplify/ui-react';
 import { Input, Button, Card, Layout, Typography, Space, Avatar } from 'antd';
 import { SendOutlined, UserOutlined } from '@ant-design/icons';
-import 'antd/dist/reset.css'; // Reset default Ant Design styles for better custom styling
-import '../Messaging.css'; // Import custom styles
+import 'antd/dist/reset.css';
+import '../Messaging.css';
 
 const { Content } = Layout;
 const { Text } = Typography;
@@ -17,6 +17,9 @@ function Messaging({ signOut }) {
   const [userId, setUserId] = useState(''); // State to store the user ID
   const ws = useRef(null); // Ref to store WebSocket instance
   const messagesEndRef = useRef(null); // Initialize messagesEndRef using useRef
+  const [isReconnecting, setIsReconnecting] = useState(false); // Track reconnection status
+
+  const WEBSOCKET_URL = 'wss://6z72j61l2b.execute-api.ap-southeast-1.amazonaws.com/dev/';
 
   // Fetch the user ID when the component mounts
   useEffect(() => {
@@ -27,28 +30,52 @@ function Messaging({ signOut }) {
     getUserAttributes();
   }, []);
 
-  // Initialize WebSocket connection
-  useEffect(() => {
-    ws.current = new WebSocket('wss://6z72j61l2b.execute-api.ap-southeast-1.amazonaws.com/dev/');
+  const connectWebSocket = () => {
+    // Check if ws already exists and is in an invalid state before reconnecting
+    if (ws.current && (ws.current.readyState === WebSocket.OPEN || ws.current.readyState === WebSocket.CONNECTING)) {
+      return;
+    }
+
+    ws.current = new WebSocket(WEBSOCKET_URL);
+
+    ws.current.onopen = () => {
+      console.log('WebSocket connected');
+      ws.current.send(JSON.stringify({ action: 'getmessages', itemId: '888' }));
+      setIsReconnecting(false);
+    };
 
     ws.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
+      console.log(data)
 
       if (Array.isArray(data.messages)) {
-        setMessages(data.messages); // Initialize with the list of past messages
-        setLoading(false); // Set loading to false once messages are loaded
+        setMessages(data.messages);
+        setLoading(false);
       } else {
-        setMessages((prevMessages) => [...prevMessages, data]); // Add new message to the state
+        setMessages((prevMessages) => [...prevMessages, data]);
       }
     };
 
-    ws.current.onopen = () => {
-      ws.current.send(JSON.stringify({ action: 'getmessages', itemId: '888' }));
+    ws.current.onclose = () => {
+      console.log('WebSocket closed. Attempting to reconnect...');
+      setIsReconnecting(true);
+      setTimeout(() => {
+        connectWebSocket(); // Attempt to reconnect after a delay
+      }, 3000); // Reconnect after 3 seconds
     };
+
+    ws.current.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+  };
+
+  // Initialize WebSocket connection
+  useEffect(() => {
+    connectWebSocket();
 
     return () => {
       if (ws.current) {
-        ws.current.close();
+        ws.current.close(); // Properly close the WebSocket connection on unmount
       }
     };
   }, []);
@@ -64,9 +91,11 @@ function Messaging({ signOut }) {
   };
 
   const sendMessage = () => {
-    if (ws.current && newMessage.trim()) {
+    if (ws.current && ws.current.readyState === WebSocket.OPEN && newMessage.trim()) {
       ws.current.send(JSON.stringify({ action: 'sendmessage', message: newMessage, userId }));
       setNewMessage(''); // Clear the input field after sending the message
+    } else if (ws.current && ws.current.readyState !== WebSocket.OPEN) {
+      console.warn('WebSocket is not open. Cannot send message.');
     }
   };
 
