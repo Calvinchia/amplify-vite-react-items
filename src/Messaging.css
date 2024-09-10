@@ -1,0 +1,81 @@
+/* Messaging.css */
+
+.messaging-layout {
+    height: 89vh;
+    background-color: #f0f0f0;
+  }
+  
+  .messaging-content {
+    display: flex;
+    justify-content: center;
+
+    padding: 5px;
+  }
+
+  .ant-card-body {
+    padding: 10px !important;
+  }
+  
+  .messages-card {
+    width: 100%;
+    max-width: 600px;
+    height: 85vh;
+    display: flex;
+    flex-direction: column;
+    border-radius: 10px;
+    overflow: hidden;
+
+  }
+  
+  .messages-container {
+
+    overflow: auto; /* Enable vertical scrolling */
+    padding: 15px;
+    background-color: #e5ddd5;
+    height: 70vh; /* Ensure it doesn't exceed the available space */
+
+
+  }
+  
+  .messages-list {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .message-item {
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    border-radius: 20px;
+    max-width: 80%;
+  }
+  
+  .message-item.sent {
+    background-color: #dcf8c6;
+    align-self: flex-end;
+  }
+  
+  .message-item.received {
+    background-color: #ffffff;
+    align-self: flex-start;
+  }
+  
+  .message-input-container {
+    padding: 10px;
+    background-color: #f9f9f9;
+    display: flex;
+    align-items: center;
+    border-top: 1px solid #ddd;
+
+  }
+  
+  .message-input {
+    width: 100%;
+  }
+  
+  .messages-card .ant-btn {
+    margin-left: 10px;
+  }
+  

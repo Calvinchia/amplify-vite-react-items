@@ -6,7 +6,9 @@ import UpdateItem from './components/UpdateItem';
 import Navigation from './components/Navigation';
 import LoginPage from './components/LoginPage';
 import ItemDetails from './components/ItemDetails';
+import Messaging from './components/Messaging';
 import { Amplify } from "aws-amplify";
+
 
 Amplify.configure({
   "auth": {
@@ -142,6 +144,7 @@ function App() {
           <Navigation />
           <Routes>
             <Route path="/" element={<Home ownerType="others" />} />
+            <Route path="/msg" element={<Messaging />} />
             <Route path="/mystuff" element={<Home ownerType="me" />} />
             <Route path="/details/:id" element={<ItemDetails />} />
             <Route path="/create" element={<CreateItem />} />
