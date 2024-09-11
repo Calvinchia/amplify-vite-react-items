@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Layout, Row, Col, Card, Alert, Spin } from 'antd';
 import { useLocation, Link } from 'react-router-dom';
-import { StorageImage } from '@aws-amplify/ui-react-storage';
+import { useAuthenticator } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import '../App.css';  // Import the CSS file for styling
 import { API_URL, S3_BASE_URL } from '../constants';
-import { useAuthenticator, Authenticator } from '@aws-amplify/ui-react';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { getCurrentUser } from 'aws-amplify/auth';
 
@@ -47,14 +46,13 @@ const Home = ({ ownerType }) => {
     };
 
     try {
-    const { username, userId, signInDetails } = await getCurrentUser();
-    if (userId) {
-      const session = await fetchAuthSession();
-      const jwtToken = session.tokens.idToken;
+      const { username, userId, signInDetails } = await getCurrentUser();
+      if (userId) {
+        const session = await fetchAuthSession();
+        const jwtToken = session.tokens.idToken;
 
-      sessionheader.Authorization = `Bearer ${jwtToken}`;
-
-    }
+        sessionheader.Authorization = `Bearer ${jwtToken}`;
+      }
     } catch (error) {
       //console.error('Error fetching user:', error.message)
     }
@@ -63,10 +61,6 @@ const Home = ({ ownerType }) => {
     setError('');
     try {
       const pagelimit = 8;
-
-      
-     
-
 
       const response = await fetch(
         `${API_URL}?limit=${pagelimit}&offset=${(currentPage - 1) * pagelimit}&owner=${ownerType}`, {
@@ -96,24 +90,18 @@ const Home = ({ ownerType }) => {
   }, [currentPage, ownerType]);
 
   useEffect(() => {
-    
     fetchItems();
   }, [fetchItems, currentPage]);
 
-  // Clear items only once on page load
-
   // Clear items when location changes
   useEffect(() => {
-
     setItems([]);
     setCurrentPage(1); // Reset to the first page
-
     setLoading(true);
     setError('');
     setHasMore(true);
 
     fetchItems();
-
   }, [location]);
 
   const lastItemRef = useCallback(
@@ -137,44 +125,43 @@ const Home = ({ ownerType }) => {
 
         <div>
           {successMessage && <div className="alert alert-success">{successMessage}</div>}
-          {/* The rest of your home page */}
         </div>
 
         <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
-          {items.map((item, index) => (
-            <Col key={item.id} xs={24} sm={12} md={8} lg={6} className="card-column">
-              <Link to={`/details/${item.id}`} style={{ textDecoration: 'none' }}>
-                <Card
-                  hoverable
-                  className="equal-height-card"
-                  style={{ display: 'flex', flexDirection: 'column', height: '100%' }}  // Make the card flex and full height
-                  cover={
-                    item.image ? (
+          {items
+            .filter(item => item.image && item.image.includes(S3_BASE_URL)) // Only show items with valid S3 images
+            .map((item, index) => (
+              <Col key={item.id} xs={24} sm={12} md={8} lg={6} className="card-column">
+                <Link to={`/details/${item.id}`} style={{ textDecoration: 'none' }}>
+                  <Card
+                    hoverable
+                    className="equal-height-card"
+                    style={{ display: 'flex', flexDirection: 'column', height: '100%' }}  // Make the card flex and full height
+                    cover={
                       <img
                         src={`${item.image}`}
                         alt={item.title}
                         style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
-                    ) : null
-                  }
-                >
-                  <div style={{ flexGrow: 1 }}>  {/* Make the card body grow to fill the remaining space */}
-                    <Card.Meta
-                      title={item.title}
-                      description={
-                        <>
-                          <div><strong>Owner:</strong> {item.owner}</div>
-                          <div>{truncateText(item.description, 100)}</div>
-                          <div><strong>Price Per Day:</strong> ${item.price_per_day}</div>
-                          <div><strong>Condition:</strong> {item.condition}</div>
-                        </>
-                      }
-                    />
-                  </div>
-                </Card>
-                {items.length === index + 1 && <div ref={lastItemRef}></div>}
-              </Link>
-            </Col>
-          ))}
+                    }
+                  >
+                    <div style={{ flexGrow: 1 }}>  {/* Make the card body grow to fill the remaining space */}
+                      <Card.Meta
+                        title={item.title}
+                        description={
+                          <>
+                            <div><strong>Owner:</strong> {item.owner}</div>
+                            <div>{truncateText(item.description, 100)}</div>
+                            <div><strong>Price Per Day:</strong> ${item.price_per_day}</div>
+                            <div><strong>Condition:</strong> {item.condition}</div>
+                          </>
+                        }
+                      />
+                    </div>
+                  </Card>
+                  {items.length === index + 1 && <div ref={lastItemRef}></div>}
+                </Link>
+              </Col>
+            ))}
         </Row>
 
         {loading && (
