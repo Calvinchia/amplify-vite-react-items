@@ -22,9 +22,6 @@ Amplify.configure({
     "standard_required_attributes": [
       "email"
     ],
-    "username_attributes": [
-      "email"
-    ],
     "user_verification_types": [
       "email"
     ],
