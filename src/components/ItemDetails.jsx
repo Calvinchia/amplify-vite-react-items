@@ -34,8 +34,7 @@ const ItemDetail = () => {
                     // Check if the user is authenticated and is the owner
                     const session = await fetchAuthSession();
                     if (session?.tokens?.idToken) {
-                        
-                        const currentUsername = session.userSub;
+                        const currentUsername = session.tokens.idToken.payload["cognito:username"];
                         // Assuming the `owner` field of the item is the username
                         if (data.owner === currentUsername) {
                             setIsOwner(true); // Set isOwner to true if the user is the owner

@@ -71,9 +71,10 @@ const UpdateItem = () => {
 
           // Fetch the user's session to check if they are the owner
           const session = await fetchAuthSession();
-          const currentUserSub = session.userSub;
+          console.log(session);
+          const currentUser = session.tokens.idToken.payload["cognito:username"];
 
-          if (data.owner !== currentUserSub) {
+          if (data.owner !== currentUser) {
             // Redirect to home if the user is not the owner
             navigate('/');
           }
