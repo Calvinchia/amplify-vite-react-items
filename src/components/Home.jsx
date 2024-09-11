@@ -162,6 +162,7 @@ const Home = ({ ownerType }) => {
                       title={item.title}
                       description={
                         <>
+                          <div><strong>Owner:</strong> {item.owner}</div>
                           <div>{truncateText(item.description, 100)}</div>
                           <div><strong>Price Per Day:</strong> ${item.price_per_day}</div>
                           <div><strong>Condition:</strong> {item.condition}</div>
