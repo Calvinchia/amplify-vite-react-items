@@ -6,7 +6,7 @@ import { useAuthenticator } from '@aws-amplify/ui-react';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { uploadData } from 'aws-amplify/storage';  // Import `uploadData` from Amplify Storage
 import { v4 as uuidv4 } from 'uuid';  // Import uuid for generating unique IDs
-import { API_URL } from '../constants';
+import { API_URL, S3_BASE_URL } from '../constants';
 
 const { Content } = Layout;
 const { Option } = Select;
@@ -65,7 +65,7 @@ const CreateItem = () => {
           },
         });
 
-        imageUrl = uniqueFileName;  // Set the uploaded image URL
+        imageUrl = `${S3_BASE_URL}${uniqueFileName}`;  // Set the uploaded image URL
       }
 
       const session = await fetchAuthSession();

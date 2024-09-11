@@ -119,7 +119,8 @@ const UpdateItem = () => {
         },
       });
 
-      return uniqueFileName;
+      // return uniqueFileName;
+      return`${S3_BASE_URL}${uniqueFileName}`; 
     } catch (err) {
       message.error(`Failed to upload ${file.name}`);
       throw err;
@@ -304,7 +305,7 @@ const UpdateItem = () => {
             <Col span={24}>
               <Form.Item label="Current Image">
                 <img
-                  src={`${S3_BASE_URL}${item.image}`}
+                  src={`${item.image}`}
                   alt={item.title}
                   style={{ width: '100%', height: '300px', objectFit: 'contain', marginBottom: '16px' }}
                 />

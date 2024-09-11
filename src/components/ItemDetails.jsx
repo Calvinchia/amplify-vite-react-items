@@ -124,7 +124,7 @@ const ItemDetail = () => {
                 <Row gutter={[16, 16]}>
                     <Col span={12}>
                         <img
-                            src={`${S3_BASE_URL}${item?.image}`}
+                            src={`${item?.image}`}
                             alt={item?.title}
                             style={{ width: '100%', height: '300px', objectFit: 'contain', marginBottom: '16px' }}
                         />

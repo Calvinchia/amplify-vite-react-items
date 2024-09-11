@@ -151,7 +151,7 @@ const Home = ({ ownerType }) => {
                   cover={
                     item.image ? (
                       <img
-                        src={`${S3_BASE_URL}${item.image}`}
+                        src={`${item.image}`}
                         alt={item.title}
                         style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
                     ) : null
