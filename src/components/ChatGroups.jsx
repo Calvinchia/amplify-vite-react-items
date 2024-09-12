@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Tabs, List, Collapse, Typography, Layout, Card } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { fetchAuthSession, getCurrentUser } from 'aws-amplify/auth';
-import { API_URL } from '../constants';
+import { API_URL, API_ROOT } from '../constants';
 import 'antd/dist/reset.css';
 //import '../ChatGroups.css';
 import '../Messaging.css';
@@ -30,7 +30,7 @@ const ChatGroups = () => {
                 const jwtToken = session.tokens.idToken;
 
                 // Fetch chat groups for "My Stuff" (items I own)
-                const responseMyStuff = await fetch(`${API_URL}/my-stuff-chat-groups?ownerid=${userId}`, {
+                const responseMyStuff = await fetch(`${API_ROOT}message?ownerid=acalchia`, {
                     headers: { Authorization: `Bearer ${jwtToken}` }
                 });
 
@@ -38,7 +38,7 @@ const ChatGroups = () => {
                 setMyStuffChats(dataMyStuff);
 
                 // Fetch chat groups for "Others" (where I am the renter)
-                const responseOthers = await fetch(`${API_URL}/others-chat-groups?renterid=${userId}`, {
+                const responseOthers = await fetch(`${API_ROOT}message?renterid=acalchia`, {
                     headers: { Authorization: `Bearer ${jwtToken}` }
                 });
 
