@@ -75,6 +75,11 @@ const ItemDetail = () => {
         return category ? category.name : '';
     };
 
+    const handleEnquire = () => {
+        // Navigate to the messaging page with itemid and current user's username
+        navigate(`/messaging?itemid=${id}`);
+    };
+
     const handleDelete = async () => {
         if (!window.confirm('Are you sure you want to delete this item?')) {
             return;
@@ -146,6 +151,13 @@ const ItemDetail = () => {
                         </Button>
                         <Button type="danger" onClick={handleDelete}>
                             Delete Item
+                        </Button>
+                    </div>
+                )}
+                {!isOwner && (
+                    <div style={{ marginTop: '20px' }}>
+                        <Button type="primary" onClick={handleEnquire}>
+                            Enquire
                         </Button>
                     </div>
                 )}

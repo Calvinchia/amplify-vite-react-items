@@ -7,6 +7,7 @@ import { withAuthenticator } from '@aws-amplify/ui-react';
 import { Input, Button, Card, Layout, Typography, Space, Avatar } from 'antd';
 import { SendOutlined, UserOutlined } from '@ant-design/icons';
 import { API_URL, WEBSOCKET_URL, S3_BASE_URL } from '../constants';
+import { useLocation } from 'react-router-dom';
 import 'antd/dist/reset.css';
 import '../Messaging.css';
 
@@ -18,9 +19,11 @@ function Messaging({ signOut }) {
     const [newMessage, setNewMessage] = useState(''); // State for the new message input
     const [loading, setLoading] = useState(true); // State to track loading status
     const [userId, setUserId] = useState(''); // State to store the user ID
+    const [itemId, setItemId] = useState('');
     const ws = useRef(null); // Ref to store WebSocket instance
     const messagesEndRef = useRef(null); // Initialize messagesEndRef using useRef
     const [isReconnecting, setIsReconnecting] = useState(false); // Track reconnection status
+    const location = useLocation(); // Get the current location
 
 
 
@@ -31,6 +34,13 @@ function Messaging({ signOut }) {
             setUserId(attributes.sub);
         };
         getUserAttributes();
+
+        // Extract the itemid from query string using URLSearchParams
+        const queryParams = new URLSearchParams(location.search);
+        const itemid = queryParams.get('itemid');
+        setItemId(itemid); // Set the itemid in state
+        console.log(`Item ID: ${itemid}`);
+        
     }, []);
 
     const connectWebSocket = async () => {
@@ -59,7 +69,8 @@ function Messaging({ signOut }) {
 
                 ws.current.onopen = () => {
                     console.log('WebSocket connected');
-                    ws.current.send(JSON.stringify({ action: 'getmessages', itemId: '888' }));
+                    console.log('item id: ' + itemId);
+                    ws.current.send(JSON.stringify({ action: 'getmessages', itemid: itemId, renterid: 'calchia' }));
                     setIsReconnecting(false);
                 };
 
@@ -95,14 +106,16 @@ function Messaging({ signOut }) {
 
     // Initialize WebSocket connection
     useEffect(() => {
+        if (itemId) {
         connectWebSocket();
+    }
 
         return () => {
             if (ws.current) {
                 ws.current.close(); // Properly close the WebSocket connection on unmount
             }
         };
-    }, []);
+    }, [itemId]);
 
     useEffect(() => {
         scrollToBottom();
@@ -116,7 +129,16 @@ function Messaging({ signOut }) {
 
     const sendMessage = () => {
         if (ws.current && ws.current.readyState === WebSocket.OPEN && newMessage.trim()) {
-            ws.current.send(JSON.stringify({ action: 'sendmessage', message: newMessage, userId }));
+            // ws.current.send(JSON.stringify({ action: 'sendmessage', message: newMessage, userId }));
+            ws.current.send(JSON.stringify(
+              { action: 'sendmessage', 
+                message: newMessage, 
+                itemid: itemId,
+                ownerid: 'calvin',
+                renterid: 'calchia',
+                sender: 'calchia' 
+              }
+            )); 
             setNewMessage(''); // Clear the input field after sending the message
         } else if (ws.current && ws.current.readyState !== WebSocket.OPEN) {
             console.warn('WebSocket is not open. Cannot send message.');
