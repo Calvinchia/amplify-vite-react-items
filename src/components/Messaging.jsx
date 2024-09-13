@@ -8,18 +8,22 @@ import { Input, Button, Card, Layout, Typography, Space, Avatar } from 'antd';
 import { SendOutlined, UserOutlined } from '@ant-design/icons';
 import { API_URL, WEBSOCKET_URL, S3_BASE_URL } from '../constants';
 import { useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import 'antd/dist/reset.css';
 import '../Messaging.css';
+import moment from 'moment'; // Import moment for formatting datetime
 
 const { Content } = Layout;
 const { Text, Title } = Typography;
 
 function Messaging({ signOut }) {
+    const navigate = useNavigate();
     const [messages, setMessages] = useState([]); // State to store messages
     const [newMessage, setNewMessage] = useState(''); // State for the new message input
     const [loading, setLoading] = useState(true); // State to track loading status
-    const [userId, setUserId] = useState(''); // State to store the user ID
+    const [username, setUsername] = useState(''); // State to store the user ID
     const [itemId, setItemId] = useState('');
+    const [renterId, setRenterId] = useState('');
     const [itemDetails, setItemDetails] = useState(null); // State to store item details
     const ws = useRef(null); // Ref to store WebSocket instance
     const messagesEndRef = useRef(null); // Initialize messagesEndRef using useRef
@@ -28,20 +32,34 @@ function Messaging({ signOut }) {
 
     // Fetch the user ID when the component mounts
     useEffect(() => {
+
+        
         const getUserAttributes = async () => {
             const attributes = await fetchUserAttributes();
-            setUserId(attributes.sub);
+
+            const { username, userId, signInDetails } = await getCurrentUser();
+            if (username) {
+                setUsername(username);
+                fetchItemDetails();
+                
+                
+            }
+
+            
         };
         getUserAttributes();
 
-        // Extract the itemid from query string using URLSearchParams
-        const queryParams = new URLSearchParams(location.search);
-        const itemid = queryParams.get('item');
-        setItemId(itemid); // Set the itemid in state
-        console.log(`Item ID: ${itemid}`);
+
 
         // Fetch the item details from the items API
         const fetchItemDetails = async () => {
+
+            // Extract the itemid from query string using URLSearchParams
+            const queryParams = new URLSearchParams(location.search);
+            const itemid = queryParams.get('item');
+            setItemId(itemid); // Set the itemid in state
+            console.log(`Item ID: ${itemid}`);
+
             if (itemid) {
                 try {
                     const response = await fetch(`${API_URL}${itemid}/`);
@@ -49,16 +67,43 @@ function Messaging({ signOut }) {
                         throw new Error('Failed to fetch item details.');
                     }
                     const data = await response.json();
+                    console.log(data);
+
+                    //check if there is renter in the query string
+                    const queryParams = new URLSearchParams(location.search);
+                    const renterid = queryParams.get('renter');
+
+
+
+                    if (data.owner === username) {
+                        console.log("Owner is viewing the item");
+                        //if renterid is missing, redirect to groups page
+                        // if renterid is null, redirect to groups page
+                        if (!renterid) {
+                            console.error('Renter ID is missing.');
+                            //redirect to groups page
+                            navigate('/inbox');
+                        } else if (renterid === username) {
+                            navigate('/inbox');
+                        } else {
+                            setRenterId(renterid);
+                        }
+
+
+                    } else {
+                        setRenterId(username);
+                        console.log("set renter id to username");
+                    }
+                    
+                        
                     setItemDetails(data);
                 } catch (error) {
                     console.error('Failed to fetch item details:', error);
                 }
-
             }
         };
 
-        fetchItemDetails();
-
+        
     }, [location]);
 
     const connectWebSocket = async () => {
@@ -69,7 +114,7 @@ function Messaging({ signOut }) {
             }
 
             const { username, userId, signInDetails } = await getCurrentUser();
-            if (userId) {
+            if (username) {
                 const session = await fetchAuthSession();
                 const jwtToken = session.tokens.idToken;
 
@@ -138,19 +183,29 @@ function Messaging({ signOut }) {
         }
     };
 
-    const sendMessage = () => {
+    const sendMessage  = () => {
         if (ws.current && ws.current.readyState === WebSocket.OPEN && newMessage.trim()) {
-            ws.current.send(JSON.stringify(
-                {
-                    action: 'sendmessage',
-                    message: newMessage,
-                    itemid: itemId,
-                    ownerid: 'calvin',
-                    renterid: 'calchia',
-                    sender: 'calchia'
-                }
-            ));
-            setNewMessage(''); // Clear the input field after sending the message
+
+           // const { username, userId, signInDetails } = await getCurrentUser();
+           console.log(`sendmsg`);
+           console.log(`username:${username}`);
+           console.log(`renterId:${renterId}`);
+            if (username && renterId) {
+
+
+                ws.current.send(JSON.stringify(
+                    {
+                        action: 'sendmessage',
+                        message: newMessage,
+                        itemid: itemId,
+                        ownerid: itemDetails.owner,
+                        renterid: renterId,
+                        sender: username, 
+                        timestamp: new Date().toISOString() // Include timestamp
+                    }
+                ));
+                setNewMessage(''); // Clear the input field after sending the message
+            }
         } else if (ws.current && ws.current.readyState !== WebSocket.OPEN) {
             console.warn('WebSocket is not open. Cannot send message.');
         }
@@ -189,10 +244,13 @@ function Messaging({ signOut }) {
                         ) : (
                             <ul className="messages-list">
                                 {messages.map((msg, index) => (
-                                    <li key={index} className={`message-item ${msg.userId === userId ? 'sent' : 'received'}`}>
-                                        <Space align="center">
-                                            {msg.userId !== userId && <Avatar icon={<UserOutlined />} />}
+                                    <li key={index} className={`message-item ${msg.sender === username ? 'sent' : 'received'}`}>
+                                        <Space align="start" direction="vertical">
+                                            {/* Show sender's ID and message */}
+                                            <Text strong>{msg.sender}</Text>
                                             <Text>{msg.message}</Text>
+                                            {/* Show timestamp formatted using moment.js */}
+                                            <Text type="secondary">{moment(msg.timestamp).format('MMMM Do YYYY, h:mm:ss a')}</Text>
                                         </Space>
                                     </li>
                                 ))}

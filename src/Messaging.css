@@ -94,3 +94,47 @@
 .item-details-info {
     margin-left: 10px;
 }
+
+
+/* Message list styles */
+.messages-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.message-item {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    max-width: 70%;
+}
+
+.message-item.sent {
+    background-color: #e6f7ff;
+    align-self: flex-end; /* Align sent messages to the right */
+    text-align: right;
+}
+
+.message-item.received {
+    background-color: #f5f5f5;
+    align-self: flex-start; /* Align received messages to the left */
+    text-align: left;
+}
+
+/* Ensure message container allows scrolling */
+.messages-container {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* Input and message container styling */
+.message-input-container {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #e8e8e8;
+}
+
+.message-input {
+    flex: 1;
+}

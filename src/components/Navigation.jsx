@@ -72,6 +72,10 @@ const Navigation = () => {
       {
         key: '2',
         label: <Link to="/create">Create Item</Link>,
+      },
+      {
+        key: '3',
+        label: <Link to="/inbox">Inbox</Link>,
       }
     );
   }
