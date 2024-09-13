@@ -12,7 +12,7 @@ import 'antd/dist/reset.css';
 import '../Messaging.css';
 
 const { Content } = Layout;
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 function Messaging({ signOut }) {
     const [messages, setMessages] = useState([]); // State to store messages
@@ -20,12 +20,11 @@ function Messaging({ signOut }) {
     const [loading, setLoading] = useState(true); // State to track loading status
     const [userId, setUserId] = useState(''); // State to store the user ID
     const [itemId, setItemId] = useState('');
+    const [itemDetails, setItemDetails] = useState(null); // State to store item details
     const ws = useRef(null); // Ref to store WebSocket instance
     const messagesEndRef = useRef(null); // Initialize messagesEndRef using useRef
     const [isReconnecting, setIsReconnecting] = useState(false); // Track reconnection status
     const location = useLocation(); // Get the current location
-
-
 
     // Fetch the user ID when the component mounts
     useEffect(() => {
@@ -40,27 +39,39 @@ function Messaging({ signOut }) {
         const itemid = queryParams.get('item');
         setItemId(itemid); // Set the itemid in state
         console.log(`Item ID: ${itemid}`);
-        
-    }, []);
+
+        // Fetch the item details from the items API
+        const fetchItemDetails = async () => {
+            if (itemid) {
+                try {
+                    const response = await fetch(`${API_URL}${itemid}/`);
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch item details.');
+                    }
+                    const data = await response.json();
+                    setItemDetails(data);
+                } catch (error) {
+                    console.error('Failed to fetch item details:', error);
+                }
+
+            }
+        };
+
+        fetchItemDetails();
+
+    }, [location]);
 
     const connectWebSocket = async () => {
-
-
-
         try {
-		
-			// Check if ws already exists and is in an invalid state before reconnecting
+            // Check if ws already exists and is in an invalid state before reconnecting
             if (ws.current && (ws.current.readyState === WebSocket.OPEN || ws.current.readyState === WebSocket.CONNECTING)) {
                 return;
             }
-
 
             const { username, userId, signInDetails } = await getCurrentUser();
             if (userId) {
                 const session = await fetchAuthSession();
                 const jwtToken = session.tokens.idToken;
-
-                //sessionheader.Authorization = `Bearer ${jwtToken}`;
 
                 console.log(`jwtToken: ${jwtToken}`);
                 const websocketUrl = `${WEBSOCKET_URL}?token=${jwtToken}`;
@@ -76,7 +87,7 @@ function Messaging({ signOut }) {
 
                 ws.current.onmessage = (event) => {
                     const data = JSON.parse(event.data);
-                    console.log(data)
+                    console.log(data);
 
                     if (Array.isArray(data.messages)) {
                         setMessages(data.messages);
@@ -100,15 +111,15 @@ function Messaging({ signOut }) {
 
             }
         } catch (error) {
-            console.error('Error fetching user:', error.message)
+            console.error('Error fetching user:', error.message);
         }
     };
 
     // Initialize WebSocket connection
     useEffect(() => {
         if (itemId) {
-        connectWebSocket();
-    }
+            connectWebSocket();
+        }
 
         return () => {
             if (ws.current) {
@@ -129,16 +140,16 @@ function Messaging({ signOut }) {
 
     const sendMessage = () => {
         if (ws.current && ws.current.readyState === WebSocket.OPEN && newMessage.trim()) {
-            // ws.current.send(JSON.stringify({ action: 'sendmessage', message: newMessage, userId }));
             ws.current.send(JSON.stringify(
-              { action: 'sendmessage', 
-                message: newMessage, 
-                itemid: itemId,
-                ownerid: 'calvin',
-                renterid: 'calchia',
-                sender: 'calchia' 
-              }
-            )); 
+                {
+                    action: 'sendmessage',
+                    message: newMessage,
+                    itemid: itemId,
+                    ownerid: 'calvin',
+                    renterid: 'calchia',
+                    sender: 'calchia'
+                }
+            ));
             setNewMessage(''); // Clear the input field after sending the message
         } else if (ws.current && ws.current.readyState !== WebSocket.OPEN) {
             console.warn('WebSocket is not open. Cannot send message.');
@@ -154,6 +165,23 @@ function Messaging({ signOut }) {
     return (
         <Layout className="messaging-layout">
             <Content className="messaging-content">
+
+                {/* Top bar for item thumbnail, owner, and name */}
+                {itemDetails && (
+                    <div className="item-details-bar">
+                        <Avatar
+                            src={itemDetails.image ? `${itemDetails.image}` : undefined}
+                            shape="square"
+                            size={64}
+                            icon={<UserOutlined />}
+                        />
+                        <div className="item-details-info">
+                            <Title level={4}>{itemDetails.title}</Title>
+                            <Text>Owner: {itemDetails.owner}</Text>
+                        </div>
+                    </div>
+                )}
+
                 <Card className="messages-card">
                     <div className="messages-container">
                         {loading ? (
