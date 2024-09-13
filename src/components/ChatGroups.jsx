@@ -87,12 +87,11 @@ const ChatGroups = () => {
                                             dataSource={myStuffChats[itemid]} // List of renters for each itemid
                                             renderItem={chatGroup => (
                                                 <List.Item
-                                                    onClick={() => goToMessaging(itemid, chatGroup.renterid)}
+                                                    onClick={() => goToMessaging(itemid, chatGroup)}
                                                     className="chat-group-item"
                                                 >
                                                     <List.Item.Meta
-                                                        title={`Renter: ${chatGroup.renterid}`}
-                                                        description={`Chat Group: ${itemid}#${chatGroup.renterid}`}
+                                                        title={`${chatGroup}`}
                                                     />
                                                 </List.Item>
                                             )}

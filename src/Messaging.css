@@ -33,7 +33,7 @@
     overflow: auto; /* Enable vertical scrolling */
     padding: 15px;
     background-color: #e5ddd5;
-    height: 70vh; /* Ensure it doesn't exceed the available space */
+    height: 65vh; /* Ensure it doesn't exceed the available space */
 
 
   }
