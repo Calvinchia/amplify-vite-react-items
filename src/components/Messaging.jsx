@@ -37,7 +37,7 @@ function Messaging({ signOut }) {
 
         // Extract the itemid from query string using URLSearchParams
         const queryParams = new URLSearchParams(location.search);
-        const itemid = queryParams.get('itemid');
+        const itemid = queryParams.get('item');
         setItemId(itemid); // Set the itemid in state
         console.log(`Item ID: ${itemid}`);
         

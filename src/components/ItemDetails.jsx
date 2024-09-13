@@ -77,7 +77,7 @@ const ItemDetail = () => {
 
     const handleEnquire = () => {
         // Navigate to the messaging page with itemid and current user's username
-        navigate(`/messaging?itemid=${id}`);
+        navigate(`/messaging?item=${id}`);
     };
 
     const handleDelete = async () => {
