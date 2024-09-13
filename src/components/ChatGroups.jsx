@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Tabs, List, Collapse, Typography, Layout, Card } from 'antd';
+import { Tabs, List, Collapse, Typography, Layout } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { fetchAuthSession, getCurrentUser } from 'aws-amplify/auth';
-import { API_URL, API_ROOT } from '../constants';
+import { API_MSG } from '../constants';
 import 'antd/dist/reset.css';
-//import '../ChatGroups.css';
 import '../Messaging.css';
 
 const { Panel } = Collapse;
@@ -12,8 +11,8 @@ const { Text } = Typography;
 const { Content } = Layout;
 
 const ChatGroups = () => {
-    const [myStuffChats, setMyStuffChats] = useState([]); // Chats for items I own
-    const [othersChats, setOthersChats] = useState([]); // Chats where I am the renter
+    const [myStuffChats, setMyStuffChats] = useState({}); // Chat groups for items I own
+    const [othersChats, setOthersChats] = useState([]); // Chat groups where I am the renter
     const [loading, setLoading] = useState(true); // Track loading state
     const [error, setError] = useState(''); // Track error state
     const [activeTab, setActiveTab] = useState('myStuff'); // Track active tab ("myStuff" or "others")
@@ -30,20 +29,22 @@ const ChatGroups = () => {
                 const jwtToken = session.tokens.idToken;
 
                 // Fetch chat groups for "My Stuff" (items I own)
-                const responseMyStuff = await fetch(`${API_ROOT}message?ownerid=acalchia`, {
-                    headers: { Authorization: `Bearer ${jwtToken}` }
+                const responseMyStuff = await fetch(`${API_MSG}?ownerid=calvin`, {
+                    //headers: { Authorization: `Bearer ${jwtToken}` }
                 });
 
                 const dataMyStuff = await responseMyStuff.json();
-                setMyStuffChats(dataMyStuff);
+                setMyStuffChats(dataMyStuff.chatGroups || {}); // Ensure chatGroups is an object
+                console.log(dataMyStuff);
 
                 // Fetch chat groups for "Others" (where I am the renter)
-                const responseOthers = await fetch(`${API_ROOT}message?renterid=acalchia`, {
-                    headers: { Authorization: `Bearer ${jwtToken}` }
+                const responseOthers = await fetch(`${API_MSG}?renterid=calchia`, {
+                    //headers: { Authorization: `Bearer ${jwtToken}` }
                 });
 
                 const dataOthers = await responseOthers.json();
-                setOthersChats(dataOthers);
+                console.log(dataOthers);
+                setOthersChats(dataOthers.chatGroups || []);
             } catch (err) {
                 setError('Failed to fetch chat groups.');
                 console.error('Error fetching chat groups:', err);
@@ -78,19 +79,20 @@ const ChatGroups = () => {
                             <Text type="danger">{error}</Text>
                         ) : (
                             <Collapse accordion>
-                                {myStuffChats.map(item => (
-                                    <Panel header={item.title} key={item.itemid}>
+                                {/* Iterate over the keys (itemids) in myStuffChats */}
+                                {Object.keys(myStuffChats).map(itemid => (
+                                    <Panel header={`Item: ${itemid}`} key={itemid}>
                                         <List
                                             itemLayout="horizontal"
-                                            dataSource={item.chatGroups}
+                                            dataSource={myStuffChats[itemid]} // List of renters for each itemid
                                             renderItem={chatGroup => (
                                                 <List.Item
-                                                    onClick={() => goToMessaging(item.itemid, chatGroup.renterid)}
+                                                    onClick={() => goToMessaging(itemid, chatGroup.renterid)}
                                                     className="chat-group-item"
                                                 >
                                                     <List.Item.Meta
                                                         title={`Renter: ${chatGroup.renterid}`}
-                                                        description={`Chat Group: ${item.itemid}#${chatGroup.renterid}`}
+                                                        description={`Chat Group: ${itemid}#${chatGroup.renterid}`}
                                                     />
                                                 </List.Item>
                                             )}
