@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { withAuthenticator } from '@aws-amplify/ui-react';
 import { getCurrentUser, fetchAuthSession } from 'aws-amplify/auth'; // Correct imports for getting current user
 import { Input, Button, Card, Layout, Typography, Space, Avatar } from 'antd';
-import { SendOutlined, UserOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, SendOutlined, UserOutlined } from '@ant-design/icons';
 import { API_URL, WEBSOCKET_URL } from '../constants';
 import { useLocation, useNavigate } from 'react-router-dom';
 import 'antd/dist/reset.css';
@@ -59,6 +59,11 @@ function Messaging({ signOut }) {
 
         initializeUserAndItem();
     }, [location, navigate]);
+
+     // Navigate back to the chat group page
+     const goBackToChatGroups = () => {
+        navigate('/inbox'); // Replace this path with the actual route to your chat groups page
+    };
 
     // Connect to WebSocket when itemId, renterId, and username are loaded
     useEffect(() => {
@@ -150,6 +155,13 @@ function Messaging({ signOut }) {
             <Content className="messaging-content">
                 {itemDetails && (
                     <div className="item-details-bar">
+                      {/* Back Button */}
+                      <Button
+                            type="text"
+                            icon={<ArrowLeftOutlined />}
+                            onClick={goBackToChatGroups}
+                            style={{ marginRight: '10px' }}
+                        />
                         <Avatar
                             src={itemDetails.image ? `${itemDetails.image}` : undefined}
                             shape="square"
