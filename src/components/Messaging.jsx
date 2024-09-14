@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { withAuthenticator } from '@aws-amplify/ui-react';
 import { getCurrentUser, fetchAuthSession } from 'aws-amplify/auth'; // Correct imports for getting current user
-import { Input, Button, Card, Layout, Typography, Space, Avatar } from 'antd';
+import { Spin, Input, Button, Card, Layout, Typography, Space, Avatar } from 'antd';
 import { ArrowLeftOutlined, SendOutlined, UserOutlined } from '@ant-design/icons';
 import { API_URL, WEBSOCKET_URL } from '../constants';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -178,7 +178,9 @@ function Messaging({ signOut }) {
                 <Card className="messages-card">
                     <div className="messages-container">
                         {loading ? (
-                            <Text>Loading...</Text>
+                            <div style={{ textAlign: 'center', padding: '20px' }}>
+                              <Spin size="large" /> {/* Ant Design Spin loader */}
+                            </div>
                         ) : (
                             <ul className="messages-list">
                                 {messages.map((msg, index) => (

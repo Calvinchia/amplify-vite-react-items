@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Tabs, List, Collapse, Typography, Layout } from 'antd';
+import { Spin, Tabs, List, Collapse, Typography, Layout } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { fetchAuthSession, getCurrentUser } from 'aws-amplify/auth';
 import { API_MSG, API_URL } from '../constants';
@@ -79,7 +79,9 @@ const ChatGroups = () => {
             key: 'myStuff',
             label: 'My Stuff',
             children: loading ? (
-                <Text>Loading...</Text>
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                    <Spin size="large" /> {/* Ant Design Spin loader */}
+                </div>
             ) : error ? (
                 <Text type="danger">{error}</Text>
             ) : (
@@ -123,7 +125,9 @@ const ChatGroups = () => {
             key: 'others',
             label: 'Others',
             children: loading ? (
-                <Text>Loading...</Text>
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                    <Spin size="large" /> {/* Ant Design Spin loader */}
+                </div>
             ) : error ? (
                 <Text type="danger">{error}</Text>
             ) : (
