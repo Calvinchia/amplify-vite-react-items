@@ -32,12 +32,27 @@ const ChatGroups = () => {
                 const jwtToken = session.tokens.idToken;
 
                 // Fetch chat groups for "My Stuff" (items I own)
-                const responseMyStuff = await fetch(`${API_MSG}?ownerid=${username}`);
+                //const responseMyStuff = await fetch(`${API_MSG}?ownerid=${username}`);
+
+                const responseMyStuff = await fetch(`${API_MSG}?ownerid=${username}`, 
+                    {
+                        //content-typr
+                        headers: {'Authorization': `Bearer ${jwtToken}`, }
+                    }
+                );
+
                 const dataMyStuff = await responseMyStuff.json();
+                console.log(dataMyStuff);
                 setMyStuffChats(dataMyStuff.chatGroups || {}); // Ensure chatGroups is an object
 
                 // Fetch chat groups for "Others" (where I am the renter)
-                const responseOthers = await fetch(`${API_MSG}?renterid=${username}`);
+                //const responseOthers = await fetch(`${API_MSG}?renterid=${username}`);
+
+                const responseOthers = await fetch(`${API_MSG}?renterid=${username}`, {
+                    //method: 'GET',
+                    headers: {'Authorization': `Bearer ${jwtToken}`, }
+                  });
+
                 const dataOthers = await responseOthers.json();
                 setOthersChats(dataOthers.chatGroups || []);
 
