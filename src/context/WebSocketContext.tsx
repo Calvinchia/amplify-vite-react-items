@@ -30,9 +30,16 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     const refreshJwtToken = async () => {
         try {
             const session = await fetchAuthSession();
-            const newToken = session.tokens.idToken;
-            setToken(newToken);
-            setIsLoggedIn(true);
+
+            // Check if session.tokens exists and is valid
+            if (session && session.tokens && session.tokens.idToken) {
+                const newToken = String(session.tokens.idToken);  // Convert idToken to a string explicitly
+                setToken(newToken);
+                setIsLoggedIn(true);
+            } else {
+                throw new Error('Session tokens are undefined.');
+            }
+
         } catch (error) {
             console.error('Error refreshing JWT token:', error);
             setIsLoggedIn(false);
