@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Authenticator } from '@aws-amplify/ui-react';
 import Home from './components/Home';
@@ -8,7 +9,9 @@ import LoginPage from './components/LoginPage';
 import ItemDetails from './components/ItemDetails';
 import Messaging from './components/Messaging';
 import ChatGroups from './components/ChatGroups';
+import { WebSocketProvider } from './context/WebSocketContext'; 
 import { Amplify } from "aws-amplify";
+
 
 
 Amplify.configure({
@@ -133,27 +136,28 @@ Amplify.configure({
 });
 
 function App() {
-
   return (
-
     <Authenticator.Provider>
-      <Router>
-        <div className="App">
-          <Navigation />
-          <Routes>
-            <Route path="/" element={<Home ownerType="others" />} />
-            <Route path="/messaging" element={<Messaging />} />
-            <Route path="/inbox" element={<ChatGroups />} />
-            <Route path="/mystuff" element={<Home ownerType="me" />} />
-            <Route path="/details/:id" element={<ItemDetails />} />
-            <Route path="/create" element={<CreateItem />} />
-            <Route path="/update/:id" element={<UpdateItem />} />
-            <Route path="/login" element={<LoginPage />} />
-          </Routes>
-        </div>
-      </Router>
+      <WebSocketProvider> 
+        <Router>
+          <div className="App">
+            <Navigation />
+            <Routes>
+              <Route path="/" element={<Home ownerType="others" />} />
+              <Route path="/messaging" element={<Messaging />} />
+              <Route path="/inbox" element={<ChatGroups />} />
+              <Route path="/mystuff" element={<Home ownerType="me" />} />
+              <Route path="/details/:id" element={<ItemDetails />} />
+              <Route path="/create" element={<CreateItem />} />
+              <Route path="/update/:id" element={<UpdateItem />} />
+              <Route path="/login" element={<LoginPage />} />
+            </Routes>
+          </div>
+        </Router>
+      </WebSocketProvider>
     </Authenticator.Provider>
   );
 }
+
 
 export default App;

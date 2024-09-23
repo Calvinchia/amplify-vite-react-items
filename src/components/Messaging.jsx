@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { withAuthenticator } from '@aws-amplify/ui-react';
-import { getCurrentUser, fetchAuthSession } from 'aws-amplify/auth'; // Correct imports for getting current user
+import { getCurrentUser, fetchAuthSession } from 'aws-amplify/auth';
 import { Spin, Input, Button, Card, Layout, Typography, Space, Avatar } from 'antd';
 import { ArrowLeftOutlined, SendOutlined, UserOutlined } from '@ant-design/icons';
 import { API_URL, WEBSOCKET_URL } from '../constants';
@@ -21,16 +21,14 @@ function Messaging({ signOut }) {
     const [itemId, setItemId] = useState('');
     const [renterId, setRenterId] = useState('');
     const [itemDetails, setItemDetails] = useState(null);
+    const [isReconnecting, setIsReconnecting] = useState(false); // Add state to manage reconnecting
     const ws = useRef(null);
     const messagesEndRef = useRef(null);
-    const [isReconnecting, setIsReconnecting] = useState(false);
     const location = useLocation();
 
-    // Fetch the user and item details when the component mounts
     useEffect(() => {
         const initializeUserAndItem = async () => {
             try {
-                // Use getCurrentUser to get the current user details
                 const user = await getCurrentUser();
                 const queryParams = new URLSearchParams(location.search);
                 const itemid = queryParams.get('item');
@@ -60,18 +58,15 @@ function Messaging({ signOut }) {
         initializeUserAndItem();
     }, [location, navigate]);
 
-     // Navigate back to the chat group page
-     const goBackToChatGroups = () => {
-        navigate('/inbox'); // Replace this path with the actual route to your chat groups page
+    const goBackToChatGroups = () => {
+        navigate('/inbox');
     };
 
-    // Connect to WebSocket when itemId, renterId, and username are loaded
     useEffect(() => {
         const connectWebSocket = async () => {
             try {
                 if (!itemId || !renterId || !username) return;
 
-                // Use fetchAuthSession to get the JWT token
                 const session = await fetchAuthSession();
                 const jwtToken = session.tokens.idToken;
 
@@ -86,8 +81,6 @@ function Messaging({ signOut }) {
 
                 ws.current.onmessage = (event) => {
                     const data = JSON.parse(event.data);
-                    console.log(data);
-
                     if (Array.isArray(data.messages)) {
                         setMessages(data.messages);
                     } else {
@@ -150,13 +143,25 @@ function Messaging({ signOut }) {
         }
     };
 
+    // Helper function to format the time
+    const formatTime = (timestamp) => {
+        return moment.utc(timestamp).local().format('HH:mm'); // Show only time in 24-hour format
+    };
+
+    // Show the date above the first message of each day
+    const shouldShowDate = (currentMessage, previousMessage) => {
+        if (!previousMessage) {
+            return true;
+        }
+        return !moment.utc(currentMessage.MessageTimestamp).isSame(previousMessage.MessageTimestamp, 'day');
+    };
+
     return (
         <Layout className="messaging-layout">
             <Content className="messaging-content">
                 {itemDetails && (
                     <div className="item-details-bar">
-                      {/* Back Button */}
-                      <Button
+                        <Button
                             type="text"
                             icon={<ArrowLeftOutlined />}
                             onClick={goBackToChatGroups}
@@ -179,19 +184,31 @@ function Messaging({ signOut }) {
                     <div className="messages-container">
                         {loading ? (
                             <div style={{ textAlign: 'center', padding: '20px' }}>
-                              <Spin size="large" /> {/* Ant Design Spin loader */}
+                                <Spin size="large" />
                             </div>
                         ) : (
                             <ul className="messages-list">
-                                {messages.map((msg, index) => (
-                                    <li key={index} className={`message-item ${msg.sender === username ? 'sent' : 'received'}`}>
-                                        <Space align="start" direction="vertical">
-                                            <Text strong>{msg.sender}</Text>
-                                            <Text>{msg.message}</Text>
-                                            <Text type="secondary">{moment(msg.timestamp).format('MMMM Do YYYY, h:mm:ss a')}</Text>
-                                        </Space>
-                                    </li>
-                                ))}
+                                {messages.map((msg, index) => {
+                                    const previousMessage = index > 0 ? messages[index - 1] : null;
+                                    return (
+                                        <React.Fragment key={index}>
+                                            {shouldShowDate(msg, previousMessage) && (
+                                                <div className="message-date">
+                                                    <Text className="date-label">
+                                                        {moment.utc(msg.MessageTimestamp).local().format('D/M/YYYY')}
+                                                    </Text>
+                                                </div>
+                                            )}
+                                            <li className={`message-item ${msg.sender === username ? 'sent' : 'received'}`}>
+                                                <Space align="start" direction="vertical">
+                                                    <Text strong>{msg.sender}</Text>
+                                                    <Text>{msg.message}</Text>
+                                                    <Text type="secondary">{formatTime(msg.MessageTimestamp)}</Text>
+                                                </Space>
+                                            </li>
+                                        </React.Fragment>
+                                    );
+                                })}
                                 <div ref={messagesEndRef} />
                             </ul>
                         )}

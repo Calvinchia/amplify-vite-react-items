@@ -52,6 +52,13 @@
     border-radius: 20px;
     max-width: 80%;
   }
+
+  .message-date {
+    padding: 8px 12px;
+    background-color: #e6f7ff;
+    margin: 20px auto; 
+    border-radius: 10px;
+  }
   
   .message-item.sent {
     background-color: #dcf8c6;
