@@ -7,6 +7,7 @@ interface WebSocketContextType {
     connected: boolean;
     messages: any[];
     sendMessage: (message: any) => void;
+    resetWebSocketMessages: () => void;
 }
 
 const WebSocketContext = createContext<WebSocketContextType | null>(null);
@@ -44,6 +45,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
             console.error('Error refreshing JWT token:', error);
             setIsLoggedIn(false);
         }
+    };
+
+    // Function to reset the messages state
+    const resetWebSocketMessages = () => {
+        setMessages([]); // Clear all WebSocket messages
     };
 
     // Function to connect to the WebSocket
@@ -97,16 +103,17 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         // Only connect WebSocket if the token and login status are valid, and we aren't already connected
         if (token && isLoggedIn && !connected) {
             console.log("Connecting WebSocket");
-            // connectWebSocket(); // Uncomment this to actually connect the WebSocket
+            connectWebSocket(); // Uncomment this to actually connect the WebSocket
         }
     
         return () => {
             if (ws.current) {
-                ws.current.close(); // Clean up WebSocket on unmount
+                //ws.current.close(); // Clean up WebSocket on unmount
             }
         };
     }, [token, isLoggedIn, connected]); // Include 'connected' to prevent reconnection when already connected
     
+
 
     const sendMessage = (message: any) => {
         if (ws.current && connected) {
@@ -117,7 +124,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     };
 
     return (
-        <WebSocketContext.Provider value={{ connected, messages, sendMessage }}>
+        <WebSocketContext.Provider value={{ connected, messages, sendMessage, resetWebSocketMessages }}>
             {children}
         </WebSocketContext.Provider>
     );

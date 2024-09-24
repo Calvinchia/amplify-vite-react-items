@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Spin, Tabs, List, Collapse, Typography, Layout } from 'antd';
+import { Spin, Tabs, List, Collapse, Typography, Layout, Badge } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { fetchAuthSession, getCurrentUser } from 'aws-amplify/auth';
 import { API_MSG, API_URL } from '../constants';
-import moment from 'moment';  // Import moment for date formatting
+import { useWebSocket } from '../context/WebSocketContext'; // Use WebSocket context
+import moment from 'moment'; // Import moment for date formatting
 import 'antd/dist/reset.css';
 import '../Messaging.css';
 
@@ -12,14 +13,18 @@ const { Text } = Typography;
 const { Content } = Layout;
 
 const ChatGroups = () => {
-    const [myStuffChats, setMyStuffChats] = useState([]); // Chat groups for items I own (updated to array)
+    const [myStuffChats, setMyStuffChats] = useState([]); // Chat groups for items I own
     const [othersChats, setOthersChats] = useState([]); // Chat groups where I am the renter
     const [itemsData, setItemsData] = useState({}); // Store item details like title and image
     const [loading, setLoading] = useState(true); // Track loading state
     const [error, setError] = useState(''); // Track error state
+    const [newMessages, setNewMessages] = useState({}); // Store new message flags
     const [activeTab, setActiveTab] = useState('myStuff'); // Track active tab ("myStuff" or "others")
     const [username, setUsername] = useState(''); // Track username
     const navigate = useNavigate();
+    
+    // Use WebSocket context to get messages
+    const { messages } = useWebSocket();
 
     useEffect(() => {
         const fetchChatGroups = async () => {
@@ -42,21 +47,21 @@ const ChatGroups = () => {
 
                 const dataMyStuff = await responseMyStuff.json();
 
-                // Ensure that each chat group has its own latest_datetime
+                // Sort the chat groups based on `latest_datetime`
                 const sortedMyStuffChats = Object.keys(dataMyStuff.chatGroups || {}).map((itemid) => {
                     const chatGroups = dataMyStuff.chatGroups[itemid];
 
-                    // Sort the chat groups within each item by their individual `latest_datetime`
-                    const sortedChatGroups = chatGroups.sort((a, b) => 
+                    // Sort the chat groups within each item by their `latest_datetime`
+                    const sortedChatGroups = chatGroups.sort((a, b) =>
                         moment(b.latest_datetime).valueOf() - moment(a.latest_datetime).valueOf()
                     );
 
                     return {
                         itemid,
                         chatGroups: sortedChatGroups,
-                        latest_datetime: sortedChatGroups[0]?.latest_datetime || '',  // Use the first group's datetime after sorting
+                        latest_datetime: sortedChatGroups[0]?.latest_datetime || '', // Use the first group's datetime
                     };
-                }).sort((a, b) => moment(b.latest_datetime).valueOf() - moment(a.latest_datetime).valueOf());  // Sort items by latest datetime
+                }).sort((a, b) => moment(b.latest_datetime).valueOf() - moment(a.latest_datetime).valueOf()); // Sort by latest datetime
 
                 setMyStuffChats(sortedMyStuffChats);
 
@@ -105,7 +110,109 @@ const ChatGroups = () => {
         fetchChatGroups();
     }, []);
 
-    // Function to format the date based on whether it's today or not, with UTC to local timezone conversion
+    // Handle new messages from WebSocket
+    useEffect(() => {
+        if (messages.length > 0) {
+            messages.forEach((msg) => {
+                const { itemid, renterid, ownerid } = msg;
+
+                // Check if the ownerid matches the current user's username
+                if (ownerid === username) {
+                    // My stuff: if I own the item
+                    handleMyStuffChats(msg, itemid, renterid === msg.sender);
+                } else {
+                    // Others: if I am the renter
+                    handleOthersChats(msg, itemid);
+                }
+            });
+        }
+    }, [messages]);
+
+    // Function to handle "My Stuff" chats (items I own)
+    const handleMyStuffChats = (msg, itemid, isRenterMessage) => {
+
+        console.log("handleMyStuffChats",msg);
+        const chatGroupIndex = myStuffChats.findIndex(group => group.itemid === itemid);
+        console.log("chatGroupIndex",chatGroupIndex);
+
+        if (chatGroupIndex !== -1) {
+            // Update the existing chat group
+            const updatedMyStuffChats = [...myStuffChats];
+            updatedMyStuffChats[chatGroupIndex].chatGroups.push(msg);
+            updatedMyStuffChats[chatGroupIndex].latest_datetime = msg.timestamp;
+
+            if (isRenterMessage) {
+                // Mark as new message from renter
+                setNewMessages((prev) => ({
+                    ...prev,
+                    [itemid]: true,
+                }));
+            }
+
+            // Re-sort the chat groups by latest message time
+            const sortedChats = updatedMyStuffChats.sort(
+                (a, b) => moment(b.latest_datetime).valueOf() - moment(a.latest_datetime).valueOf()
+            );
+            setMyStuffChats(sortedChats);
+        } else {
+            // Create a new chat group if it doesn't exist
+            const newChatGroup = {
+                itemid: msg.itemid,
+                chatGroups: [msg],
+                latest_datetime: msg.timestamp,
+            };
+            setMyStuffChats((prev) => [newChatGroup, ...prev]);
+
+            if (isRenterMessage) {
+                // Mark as new message from renter
+                setNewMessages((prev) => ({
+                    ...prev,
+                    [itemid]: true,
+                }));
+            }
+        }
+    };
+
+    // Function to handle "Others" chats (items I rent)
+    const handleOthersChats = (msg, chatGroupKey) => {
+        const chatGroupIndex = othersChats.findIndex(
+            (group) => `${group.itemid}#${group.renterid}` === chatGroupKey
+        );
+
+        if (chatGroupIndex !== -1) {
+            // Update the existing chat group
+            const updatedOthersChats = [...othersChats];
+            updatedOthersChats[chatGroupIndex].latest_datetime = msg.timestamp;
+
+            // Mark as new message
+            setNewMessages((prev) => ({
+                ...prev,
+                [chatGroupKey]: true,
+            }));
+
+            // Re-sort the chat groups by latest message time
+            const sortedChats = updatedOthersChats.sort(
+                (a, b) => moment(b.latest_datetime).valueOf() - moment(a.latest_datetime).valueOf()
+            );
+            setOthersChats(sortedChats);
+        } else {
+            // Create a new chat group if it doesn't exist
+            const newChatGroup = {
+                itemid: msg.itemid,
+                renterid: msg.renterid,
+                latest_datetime: msg.timestamp,
+            };
+            setOthersChats((prev) => [newChatGroup, ...prev]);
+
+            // Mark as new message
+            setNewMessages((prev) => ({
+                ...prev,
+                [chatGroupKey]: true,
+            }));
+        }
+    };
+
+    // Function to format the date based on whether it's today or not
     const formatDate = (datetime) => {
         const date = moment.utc(datetime).local(); // Convert UTC to local time
         if (date.isSame(moment(), 'day')) {
@@ -153,10 +260,11 @@ const ChatGroups = () => {
                                 dataSource={chatGroups}
                                 renderItem={(chatGroup) => (
                                     <List.Item onClick={() => goToMessaging(itemid, chatGroup.renterid)}>
-                                        <List.Item.Meta
-                                            title={chatGroup.renterid}
-                                        />
+                                        <List.Item.Meta title={chatGroup.renterid} />
                                         <Text type="secondary">{formatDate(chatGroup.latest_datetime)}</Text>
+                                        {newMessages[`${itemid}#${chatGroup.renterid}`] && (
+                                            <Badge count="N" style={{ backgroundColor: '#52c41a' }} />
+                                        )}
                                     </List.Item>
                                 )}
                             />
@@ -198,6 +306,9 @@ const ChatGroups = () => {
                                 description={`Owner: ${chatGroup.ownerid}`}
                             />
                             <Text type="secondary">{formatDate(chatGroup.latest_datetime)}</Text>
+                            {newMessages[`${chatGroup.itemid}#${chatGroup.renterid}`] && (
+                                <Badge count="N" style={{ backgroundColor: '#52c41a' }} />
+                            )}
                         </List.Item>
                     )}
                 />
@@ -212,7 +323,7 @@ const ChatGroups = () => {
                     defaultActiveKey="myStuff"
                     activeKey={activeTab}
                     onChange={setActiveTab}
-                    items={tabItems} 
+                    items={tabItems}
                     centered
                     size="large"
                 />

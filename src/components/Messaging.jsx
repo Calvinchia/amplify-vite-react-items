@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { withAuthenticator } from '@aws-amplify/ui-react';
-import { getCurrentUser, fetchAuthSession } from 'aws-amplify/auth';
+import { getCurrentUser } from 'aws-amplify/auth';
 import { Spin, Input, Button, Card, Layout, Typography, Space, Avatar } from 'antd';
 import { ArrowLeftOutlined, SendOutlined, UserOutlined } from '@ant-design/icons';
-import { API_URL, WEBSOCKET_URL } from '../constants';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useWebSocket } from '../context/WebSocketContext'; // Import WebSocket context
+import { API_MSG, API_URL } from '../constants';
 import 'antd/dist/reset.css';
 import '../Messaging.css';
 import moment from 'moment'; // Import moment for formatting datetime
@@ -14,21 +15,28 @@ const { Text, Title } = Typography;
 
 function Messaging({ signOut }) {
     const navigate = useNavigate();
-    const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const [username, setUsername] = useState('');
     const [itemId, setItemId] = useState('');
     const [renterId, setRenterId] = useState('');
     const [itemDetails, setItemDetails] = useState(null);
-    const [isReconnecting, setIsReconnecting] = useState(false); // Add state to manage reconnecting
-    const ws = useRef(null);
     const messagesEndRef = useRef(null);
     const location = useLocation();
+    const [hasFetchedMessages, setHasFetchedMessages] = useState(false); // Track if messages have been fetched
+
+    // Use WebSocket context
+    const { sendMessage, messages: wsMessages, connected, resetWebSocketMessages } = useWebSocket(); // Added resetWebSocketMessages to reset wsMessages
+
+    // Store the displayed messages to check for duplicates
+    const [displayedMessages, setDisplayedMessages] = useState([]);
 
     useEffect(() => {
         const initializeUserAndItem = async () => {
             try {
+                setDisplayedMessages([]);
+                resetWebSocketMessages(); // Clear wsMessages from WebSocket context
+                
                 const user = await getCurrentUser();
                 const queryParams = new URLSearchParams(location.search);
                 const itemid = queryParams.get('item');
@@ -38,6 +46,9 @@ function Messaging({ signOut }) {
                 setItemId(itemid);
                 setRenterId(renterid);
 
+                // Clear both displayed messages and WebSocket messages when a new chat group is loaded
+                
+
                 if (itemid) {
                     const response = await fetch(`${API_URL}${itemid}/`);
                     if (!response.ok) {
@@ -46,6 +57,7 @@ function Messaging({ signOut }) {
                     const data = await response.json();
                     setItemDetails(data);
 
+                    // Redirect if the owner is viewing without a renter
                     if (data.owner === user.username && !renterid) {
                         navigate('/inbox');
                     }
@@ -58,102 +70,101 @@ function Messaging({ signOut }) {
         initializeUserAndItem();
     }, [location, navigate]);
 
-    const goBackToChatGroups = () => {
-        navigate('/inbox');
-    };
-
+    // Ensure the WebSocket fetches all messages when connected (only once)
     useEffect(() => {
-        const connectWebSocket = async () => {
-            try {
-                if (!itemId || !renterId || !username) return;
-
-                const session = await fetchAuthSession();
-                const jwtToken = session.tokens.idToken;
-
-                const websocketUrl = `${WEBSOCKET_URL}?token=${jwtToken}`;
-                ws.current = new WebSocket(websocketUrl);
-
-                ws.current.onopen = () => {
-                    console.log('WebSocket connected');
-                    ws.current.send(JSON.stringify({ action: 'getmessages', itemid: itemId, renterid: renterId }));
-                    setIsReconnecting(false);
-                };
-
-                ws.current.onmessage = (event) => {
-                    const data = JSON.parse(event.data);
-                    if (Array.isArray(data.messages)) {
-                        setMessages(data.messages);
-                    } else {
-                        setMessages((prevMessages) => [...prevMessages, data]);
-                    }
-                    setLoading(false);
-                };
-
-                ws.current.onclose = () => {
-                    console.log('WebSocket closed. Attempting to reconnect...');
-                    setIsReconnecting(true);
-                    setTimeout(connectWebSocket, 3000);
-                };
-
-                ws.current.onerror = (error) => {
-                    console.error('WebSocket error:', error);
-                };
-            } catch (error) {
-                console.error('Error connecting to WebSocket:', error);
-            }
-        };
-
-        if (itemId && renterId && username) {
-            connectWebSocket();
+        if (connected && itemId && renterId && !hasFetchedMessages) {
+            console.log('WebSocket connected, fetching messages...');
+            sendMessage({
+                action: 'getmessages',
+                itemid: itemId,
+                renterid: renterId
+            });
+            setHasFetchedMessages(true);  // Set to true after fetching messages
+            //clear the messages
+            console.log('clearing messages');
+            setDisplayedMessages([]);
         }
+    }, [connected, itemId, renterId, sendMessage, hasFetchedMessages]);
 
-        return () => {
-            if (ws.current) {
-                ws.current.close();
+    // Update the messages and check for duplicates
+    useEffect(() => {
+        
+        if (wsMessages && wsMessages.length > 0) {
+            console.log('Received messages:', wsMessages);
+            console.log('Existing messages:', displayedMessages);
+            
+            // Check if wsMessages contains a `messages` array or just a single message
+            const newMessages = wsMessages.flatMap((wsMsg) => wsMsg.messages || [wsMsg]); // Process array or singular message
+    
+            const nonDuplicateMessages = newMessages.filter((msg) => {
+                // Check for duplicate messages
+                return !displayedMessages.some(
+                    (existingMsg) =>
+                        existingMsg.MessageTimestamp === msg.MessageTimestamp &&
+                        existingMsg.message === msg.message
+                );
+            });
+    
+            if (nonDuplicateMessages.length > 0) {
+                // Combine new and existing messages, then sort them by timestamp (newest to oldest)
+                const sortedMessages = [...displayedMessages, ...nonDuplicateMessages].sort(
+                    (a, b) => moment.utc(a.MessageTimestamp).valueOf() - moment.utc(b.MessageTimestamp).valueOf()
+                );
+    
+                setDisplayedMessages(sortedMessages);
             }
-        };
-    }, [itemId, renterId, username]);
+    
+            setLoading(false);
+        }
+    }, [wsMessages, displayedMessages]);
+    
 
     useEffect(() => {
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
-    }, [messages]);
+    }, [displayedMessages]);
 
-    const sendMessage = () => {
-        if (ws.current && ws.current.readyState === WebSocket.OPEN && newMessage.trim()) {
-            ws.current.send(JSON.stringify({
+    const handleSendMessage = () => {
+        if (newMessage.trim()) {
+            const messageData = {
                 action: 'sendmessage',
                 message: newMessage,
                 itemid: itemId,
-                ownerid: itemDetails.owner,
+                ownerid: itemDetails?.owner,
                 renterid: renterId,
                 sender: username,
-                timestamp: new Date().toISOString()
-            }));
+                timestamp: new Date().toISOString(),
+            };
+
+            sendMessage(messageData); // Use WebSocket context's sendMessage
             setNewMessage('');
-        } else {
-            console.warn('WebSocket is not open. Cannot send message.');
         }
     };
 
     const handleKeyDown = (event) => {
         if (event.key === 'Enter') {
-            sendMessage();
+            handleSendMessage();
         }
     };
 
-    // Helper function to format the time
     const formatTime = (timestamp) => {
-        return moment.utc(timestamp).local().format('HH:mm'); // Show only time in 24-hour format
+        return moment.utc(timestamp).local().format('HH:mm');
     };
 
-    // Show the date above the first message of each day
     const shouldShowDate = (currentMessage, previousMessage) => {
-        if (!previousMessage) {
-            return true;
-        }
-        return !moment.utc(currentMessage.MessageTimestamp).isSame(previousMessage.MessageTimestamp, 'day');
+        if (!previousMessage) return true; // Always show date for the first message
+
+        const currentDate = moment.utc(currentMessage.MessageTimestamp).local();
+        const previousDate = moment.utc(previousMessage.MessageTimestamp).local();
+    
+        // Use isSame on the moment objects, not the formatted string
+        return !currentDate.isSame(previousDate, 'day');
+
+    };
+
+    const goBackToChatGroups = () => {
+        navigate('/inbox');
     };
 
     return (
@@ -188,10 +199,10 @@ function Messaging({ signOut }) {
                             </div>
                         ) : (
                             <ul className="messages-list">
-                                {messages.map((msg, index) => {
-                                    const previousMessage = index > 0 ? messages[index - 1] : null;
+                                {displayedMessages.map((msg, index) => {
+                                    const previousMessage = index > 0 ? displayedMessages[index - 1] : null;
                                     return (
-                                        <React.Fragment key={index}>
+                                        <React.Fragment key={msg.MessageTimestamp || index}>
                                             {shouldShowDate(msg, previousMessage) && (
                                                 <div className="message-date">
                                                     <Text className="date-label">
@@ -221,7 +232,7 @@ function Messaging({ signOut }) {
                             onChange={(e) => setNewMessage(e.target.value)}
                             onKeyDown={handleKeyDown}
                             suffix={
-                                <Button type="primary" icon={<SendOutlined />} onClick={sendMessage} />
+                                <Button type="primary" icon={<SendOutlined />} onClick={handleSendMessage} />
                             }
                         />
                     </div>
