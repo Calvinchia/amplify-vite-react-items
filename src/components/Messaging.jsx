@@ -83,6 +83,7 @@ function Messaging({ signOut }) {
             //clear the messages
             console.log('clearing messages');
             setDisplayedMessages([]);
+            resetWebSocketMessages(); // Clear wsMessages from WebSocket context
         }
     }, [connected, itemId, renterId, sendMessage, hasFetchedMessages]);
 

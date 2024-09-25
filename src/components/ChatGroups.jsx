@@ -30,6 +30,7 @@ const ChatGroups = () => {
         const fetchChatGroups = async () => {
             setLoading(true);
             setError('');
+            console.log("fetchChatGroups");
 
             try {
                 const { username } = await getCurrentUser();
@@ -119,34 +120,57 @@ const ChatGroups = () => {
                 // Check if the ownerid matches the current user's username
                 if (ownerid === username) {
                     // My stuff: if I own the item
-                    handleMyStuffChats(msg, itemid, renterid === msg.sender);
+                    handleMyStuffChats(msg);
                 } else {
                     // Others: if I am the renter
-                    handleOthersChats(msg, itemid);
+                    handleOthersChats(msg);
                 }
             });
         }
     }, [messages]);
 
     // Function to handle "My Stuff" chats (items I own)
-    const handleMyStuffChats = (msg, itemid, isRenterMessage) => {
+    const handleMyStuffChats = (msg) => {
 
-        console.log("handleMyStuffChats",msg);
-        const chatGroupIndex = myStuffChats.findIndex(group => group.itemid === itemid);
-        console.log("chatGroupIndex",chatGroupIndex);
+        const chatGroupIndex = myStuffChats.findIndex(group => group.itemid === msg.itemid);
+
+        //create msg for insert
+        const newMsg = {
+            renterid: msg.renterid,
+            latest_datetime: msg.MessageTimestamp
+        }
 
         if (chatGroupIndex !== -1) {
             // Update the existing chat group
-            const updatedMyStuffChats = [...myStuffChats];
-            updatedMyStuffChats[chatGroupIndex].chatGroups.push(msg);
-            updatedMyStuffChats[chatGroupIndex].latest_datetime = msg.timestamp;
 
-            if (isRenterMessage) {
-                // Mark as new message from renter
-                setNewMessages((prev) => ({
-                    ...prev,
-                    [itemid]: true,
-                }));
+            //check if renterid exists in this itemid group, if exist update latest_datetime else add new group
+            const renterIndex = myStuffChats[chatGroupIndex].chatGroups.findIndex(group => group.renterid === newMsg.renterid);
+            let updatedMyStuffChats;
+            if(renterIndex !== -1){
+                // Update the existing chat group
+                updatedMyStuffChats = [...myStuffChats];
+                updatedMyStuffChats[chatGroupIndex].chatGroups[renterIndex].latest_datetime = newMsg.latest_datetime;
+                updatedMyStuffChats[chatGroupIndex].latest_datetime = newMsg.latest_datetime;
+                
+            } else {
+                // Create a new chat group if it doesn't exist
+                console.log("Create a new chat group if it doesn't exist");
+
+                updatedMyStuffChats = [...myStuffChats];
+                updatedMyStuffChats[chatGroupIndex].chatGroups.push(newMsg);
+                updatedMyStuffChats[chatGroupIndex].latest_datetime = newMsg.latest_datetime;
+                
+
+            }
+            if (username && msg.sender) {
+                if (msg.sender !== username) {
+                    // Mark as new message from renter
+                    setNewMessages((prev) => ({
+                        ...prev,
+                        [`${msg.itemid}#${newMsg.renterid}`]: true,
+                        [msg.itemid]: true,
+                    }));
+                }
             }
 
             // Re-sort the chat groups by latest message time
@@ -154,41 +178,57 @@ const ChatGroups = () => {
                 (a, b) => moment(b.latest_datetime).valueOf() - moment(a.latest_datetime).valueOf()
             );
             setMyStuffChats(sortedChats);
+
+
         } else {
             // Create a new chat group if it doesn't exist
             const newChatGroup = {
                 itemid: msg.itemid,
-                chatGroups: [msg],
-                latest_datetime: msg.timestamp,
+                chatGroups: [newMsg],
+                latest_datetime: newMsg.latest_datetime, // Use the first group's datetime
             };
             setMyStuffChats((prev) => [newChatGroup, ...prev]);
 
-            if (isRenterMessage) {
-                // Mark as new message from renter
-                setNewMessages((prev) => ({
-                    ...prev,
-                    [itemid]: true,
-                }));
+            //if username and msg.sender are not blank
+            if (username && msg.sender) {
+                if (msg.sender !== username) {
+                    // Mark as new message from renter
+                    setNewMessages((prev) => ({
+                        ...prev,
+                        [`${msg.itemid}#${newMsg.renterid}`]: true,
+                        [msg.itemid]: true,
+                    }));
+                }
             }
         }
     };
 
     // Function to handle "Others" chats (items I rent)
-    const handleOthersChats = (msg, chatGroupKey) => {
-        const chatGroupIndex = othersChats.findIndex(
-            (group) => `${group.itemid}#${group.renterid}` === chatGroupKey
-        );
-
+    const handleOthersChats = (msg) => {
+        console.log("msg",msg);
+        console.log("othersChats",othersChats);
+        const chatGroupIndex = othersChats.findIndex(group => group.itemid === msg.itemid && group.ownerid === msg.ownerid);
+        console.log("chatGroupIndex",chatGroupIndex);
         if (chatGroupIndex !== -1) {
             // Update the existing chat group
-            const updatedOthersChats = [...othersChats];
-            updatedOthersChats[chatGroupIndex].latest_datetime = msg.timestamp;
-
-            // Mark as new message
-            setNewMessages((prev) => ({
-                ...prev,
-                [chatGroupKey]: true,
-            }));
+            console.log("chatGroupIndex found",chatGroupIndex);
+            let updatedOthersChats = [...othersChats];
+            console.log("updatedOthersChats",updatedOthersChats);
+            updatedOthersChats[chatGroupIndex].latest_datetime = msg.MessageTimestamp;
+            console.log("updatedOthersChats_after",updatedOthersChats);
+            if (username && msg.sender) {
+                if (msg.sender !== username) {
+                    
+                    console.log("msg.sender",msg.sender);
+                    console.log("username",username);
+                    console.log("Mark as new message from renter");
+                    // Mark as new message
+                    setNewMessages((prev) => ({
+                        ...prev,
+                        [`${msg.itemid}#${msg.ownerid}`]: true,
+                    }));
+                }
+            }
 
             // Re-sort the chat groups by latest message time
             const sortedChats = updatedOthersChats.sort(
@@ -199,16 +239,22 @@ const ChatGroups = () => {
             // Create a new chat group if it doesn't exist
             const newChatGroup = {
                 itemid: msg.itemid,
-                renterid: msg.renterid,
-                latest_datetime: msg.timestamp,
+                ownerid: msg.ownerid,
+                latest_datetime: msg.MessageTimestamp,
             };
             setOthersChats((prev) => [newChatGroup, ...prev]);
 
-            // Mark as new message
-            setNewMessages((prev) => ({
-                ...prev,
-                [chatGroupKey]: true,
-            }));
+            if (username && msg.sender) {
+                if (msg.sender !== username) {
+                    console.log("msg.sender",msg.sender);
+                    console.log("username",username);
+                    console.log("Mark as new message from renter2");
+                    setNewMessages((prev) => ({
+                        ...prev,
+                        [`${msg.itemid}#${msg.ownerid}`]: true,
+                    }));
+                }
+            }
         }
     };
 
@@ -251,6 +297,9 @@ const ChatGroups = () => {
                                         <span>{itemsData[itemid]?.title || itemid}</span>
                                     </div>
                                     <Text type="secondary">{formatDate(latest_datetime)}</Text>
+                                    {newMessages[itemid] && (
+                                            <Badge count="N" style={{ backgroundColor: '#52c41a' }} />
+                                        )}
                                 </div>
                             }
                             key={itemid}
@@ -306,7 +355,7 @@ const ChatGroups = () => {
                                 description={`Owner: ${chatGroup.ownerid}`}
                             />
                             <Text type="secondary">{formatDate(chatGroup.latest_datetime)}</Text>
-                            {newMessages[`${chatGroup.itemid}#${chatGroup.renterid}`] && (
+                            {newMessages[`${chatGroup.itemid}#${chatGroup.ownerid}`] && (
                                 <Badge count="N" style={{ backgroundColor: '#52c41a' }} />
                             )}
                         </List.Item>
