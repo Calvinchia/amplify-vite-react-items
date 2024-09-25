@@ -115,15 +115,17 @@ const ChatGroups = () => {
     useEffect(() => {
         if (messages.length > 0) {
             messages.forEach((msg) => {
-                const { itemid, renterid, ownerid } = msg;
+                if (msg) {
+                    const { itemid, renterid, ownerid } = msg;
 
-                // Check if the ownerid matches the current user's username
-                if (ownerid === username) {
-                    // My stuff: if I own the item
-                    handleMyStuffChats(msg);
-                } else {
-                    // Others: if I am the renter
-                    handleOthersChats(msg);
+                    // Check if the ownerid matches the current user's username
+                    if (ownerid === username) {
+                        // My stuff: if I own the item
+                        handleMyStuffChats(msg);
+                    } else {
+                        // Others: if I am the renter
+                        handleOthersChats(msg);
+                    }
                 }
             });
         }
