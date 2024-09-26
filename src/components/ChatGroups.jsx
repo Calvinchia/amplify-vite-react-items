@@ -224,6 +224,7 @@ const ChatGroups = () => {
                     console.log("msg.sender",msg.sender);
                     console.log("username",username);
                     console.log("Mark as new message from renter");
+                    console.log(`${msg.itemid}#${msg.ownerid}`);
                     // Mark as new message
                     setNewMessages((prev) => ({
                         ...prev,
@@ -251,6 +252,7 @@ const ChatGroups = () => {
                     console.log("msg.sender",msg.sender);
                     console.log("username",username);
                     console.log("Mark as new message from renter2");
+                    console.log(`${msg.itemid}#${msg.ownerid}`);
                     setNewMessages((prev) => ({
                         ...prev,
                         [`${msg.itemid}#${msg.ownerid}`]: true,
@@ -259,6 +261,44 @@ const ChatGroups = () => {
             }
         }
     };
+
+    // Refactor the panel items creation for "My Stuff"
+const getMyStuffCollapseItems = (myStuffChats, itemsData, newMessages, goToMessaging) => {
+    return myStuffChats.map(({ itemid, chatGroups, latest_datetime }) => ({
+      key: itemid,
+      label: (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <img
+              src={itemsData[itemid]?.imageUrl}
+              alt="Item thumbnail"
+              style={{ width: '40px', height: '40px', marginRight: '10px', objectFit: 'cover' }}
+            />
+            <span>{itemsData[itemid]?.title || itemid}</span>
+          </div>
+          <Text type="secondary">{formatDate(latest_datetime)}</Text>
+          {newMessages[itemid] && (
+            <Badge count="N" style={{ backgroundColor: '#52c41a' }} />
+        )}
+        </div>
+      ),
+      children: (
+        <List
+          itemLayout="horizontal"
+          dataSource={chatGroups}
+          renderItem={(chatGroup) => (
+            <List.Item onClick={() => goToMessaging(itemid, chatGroup.renterid)}>
+              <List.Item.Meta title={chatGroup.renterid} />
+              <Text type="secondary">{formatDate(chatGroup.latest_datetime)}</Text>
+              {newMessages[`${itemid}#${chatGroup.renterid}`] && (
+                <Badge count="N" style={{ backgroundColor: '#52c41a' }} />
+            )}
+            </List.Item>
+          )}
+        />
+      ),
+    }));
+  };
 
     // Function to format the date based on whether it's today or not
     const formatDate = (datetime) => {
@@ -279,108 +319,57 @@ const ChatGroups = () => {
             key: 'myStuff',
             label: 'My Stuff',
             children: loading ? (
-                <div style={{ textAlign: 'center', padding: '20px' }}>
-                    <Spin size="large" />
-                </div>
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                <Spin size="large" />
+              </div>
             ) : error ? (
-                <Text type="danger">{error}</Text>
+              <Text type="danger">{error}</Text>
             ) : (
-                <Collapse accordion>
-                    {myStuffChats.map(({ itemid, chatGroups, latest_datetime }) => (
-                        <Panel
-                            header={
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                                        <img
-                                            src={itemsData[itemid]?.imageUrl}
-                                            alt="Item thumbnail"
-                                            style={{ width: '40px', height: '40px', marginRight: '10px', objectFit: 'cover' }}
-                                        />
-                                        <span>{itemsData[itemid]?.title || itemid}</span>
-                                    </div>
-                                    <Text type="secondary">{formatDate(latest_datetime)}</Text>
-                                    {newMessages[itemid] && (
-                                            <Badge count="N" style={{ backgroundColor: '#52c41a' }} />
-                                        )}
-                                </div>
-                            }
-                            key={itemid}
-                        >
-                            <List
-                                itemLayout="horizontal"
-                                dataSource={chatGroups}
-                                renderItem={(chatGroup) => (
-                                    <List.Item onClick={() => goToMessaging(itemid, chatGroup.renterid)}>
-                                        <List.Item.Meta title={chatGroup.renterid} />
-                                        <Text type="secondary">{formatDate(chatGroup.latest_datetime)}</Text>
-                                        {newMessages[`${itemid}#${chatGroup.renterid}`] && (
-                                            <Badge count="N" style={{ backgroundColor: '#52c41a' }} />
-                                        )}
-                                    </List.Item>
-                                )}
-                            />
-                        </Panel>
-                    ))}
-                </Collapse>
+              <Collapse accordion items={getMyStuffCollapseItems(myStuffChats, itemsData, newMessages, goToMessaging)} />
             ),
         },
         {
             key: 'others',
             label: 'Others',
             children: loading ? (
-                <div style={{ textAlign: 'center', padding: '20px' }}>
-                    <Spin size="large" />
-                </div>
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                <Spin size="large" />
+              </div>
             ) : error ? (
-                <Text type="danger">{error}</Text>
+              <Text type="danger">{error}</Text>
             ) : (
-                <List
-                    itemLayout="horizontal"
-                    dataSource={othersChats}
-                    renderItem={(chatGroup) => (
-                        <List.Item onClick={() => goToMessaging(chatGroup.itemid, username)}>
-                            <List.Item.Meta
-                                avatar={
-                                    <img
-                                        src={itemsData[chatGroup.itemid]?.imageUrl}
-                                        alt="Item thumbnail"
-                                        style={{
-                                            width: '40px',
-                                            height: '40px',
-                                            marginRight: '10px',
-                                            marginLeft: '40px',
-                                            objectFit: 'cover',
-                                        }}
-                                    />
-                                }
-                                title={`${itemsData[chatGroup.itemid]?.title || chatGroup.itemid}`}
-                                description={`Owner: ${chatGroup.ownerid}`}
-                            />
-                            <Text type="secondary">{formatDate(chatGroup.latest_datetime)}</Text>
-                            {newMessages[`${chatGroup.itemid}#${chatGroup.ownerid}`] && (
-                                <Badge count="N" style={{ backgroundColor: '#52c41a' }} />
-                            )}
-                        </List.Item>
-                    )}
-                />
+              <List
+                itemLayout="horizontal"
+                dataSource={othersChats}
+                renderItem={(chatGroup) => (
+                  <List.Item onClick={() => goToMessaging(chatGroup.itemid, username)}>
+                    <List.Item.Meta
+                      avatar={
+                        <img
+                          src={itemsData[chatGroup.itemid]?.imageUrl}
+                          alt="Item thumbnail"
+                          style={{ width: '40px', height: '40px', marginRight: '10px', marginLeft: '40px', objectFit: 'cover' }}
+                        />
+                      }
+                      title={`${itemsData[chatGroup.itemid]?.title || chatGroup.itemid}`}
+                      description={`Owner: ${chatGroup.ownerid}`}
+                    />
+                    <Text type="secondary">{formatDate(chatGroup.latest_datetime)}</Text>
+                    {newMessages[`${chatGroup.itemid}#${chatGroup.ownerid}`] && <Badge count="N" style={{ backgroundColor: '#52c41a' }} />}
+                  </List.Item>
+                )}
+              />
             ),
-        },
+          },
     ];
 
     return (
         <Layout>
-            <Content className="chat-groups-content">
-                <Tabs
-                    defaultActiveKey="myStuff"
-                    activeKey={activeTab}
-                    onChange={setActiveTab}
-                    items={tabItems}
-                    centered
-                    size="large"
-                />
-            </Content>
+          <Content className="chat-groups-content">
+            <Tabs defaultActiveKey="myStuff" activeKey={activeTab} onChange={setActiveTab} items={tabItems} centered size="large" />
+          </Content>
         </Layout>
-    );
+      );
 };
 
 export default ChatGroups;

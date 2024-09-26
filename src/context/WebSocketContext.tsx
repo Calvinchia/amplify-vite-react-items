@@ -77,6 +77,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
             console.log('WebSocket closed');
             setConnected(false);
             ws.current = null;
+            refreshJwtToken();
 
             // Attempt to reconnect with a delay
             if (!attemptingReconnection) {
@@ -91,6 +92,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         ws.current.onerror = (error) => {
             console.error('WebSocket error:', error);
             ws.current?.close(); // Close the socket on error
+            refreshJwtToken();
         };
     };
 
