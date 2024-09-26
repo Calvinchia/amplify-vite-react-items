@@ -168,6 +168,10 @@ function Messaging({ signOut }) {
         navigate('/inbox');
     };
 
+    const handleGoToDetails = (itemid) => {
+        navigate(`/details/${itemid}`); // Navigate to /details/itemid
+    };
+
     return (
         <Layout className="messaging-layout">
             <Content className="messaging-content">
@@ -211,13 +215,28 @@ function Messaging({ signOut }) {
                                                     </Text>
                                                 </div>
                                             )}
-                                            <li className={`message-item ${msg.sender === username ? 'sent' : 'received'}`}>
-                                                <Space align="start" direction="vertical">
-                                                    {msg.sender !== username ? <Text strong>{msg.sender}</Text> : ''}
-                                                    <Text>{msg.message}</Text>
-                                                    <Text type="secondary">{formatTime(msg.MessageTimestamp)}</Text>
-                                                </Space>
-                                            </li>
+                                            {msg.admin==="offer" ? (
+                                                <li className="message-item admin" onClick={() => handleGoToDetails(itemId)}>
+                                                    <Space align="start" direction="vertical">
+                                                        <Text strong>An offer was made (Click to view)</Text>
+                                                    </Space>
+                                                </li>
+                                            ) : msg.admin==="accept" ? (
+                                                <li className="message-item admin" onClick={() => handleGoToDetails(itemId)}>
+                                                    <Space align="start" direction="vertical">
+                                                        <Text strong>An offer was accepted (Click to view)</Text>
+                                                    </Space>
+                                                </li>
+                                            ) : (
+                                                <li className={`message-item ${msg.sender === username ? 'sent' : 'received'}`}>
+                                                    <Space align="start" direction="vertical">
+                                                        {msg.sender !== username ? <Text strong>{msg.sender}</Text> : ''}
+                                                        <Text>{msg.message}</Text>
+                                                        <Text type="secondary">{formatTime(msg.MessageTimestamp)}</Text>
+                                                    </Space>
+                                                </li>
+                                            )}
+                                            
                                         </React.Fragment>
                                     );
                                 })}

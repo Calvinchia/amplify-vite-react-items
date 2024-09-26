@@ -68,6 +68,12 @@
     background-color: #ffffff;
     align-self: flex-start;
   }
+
+  .message-item.admin {
+    background-color: #e4ffdc;
+    /* flex center */
+    align-self: center;
+  }
   
   .message-input-container {
     padding: 10px;
