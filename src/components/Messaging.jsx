@@ -213,7 +213,7 @@ function Messaging({ signOut }) {
                                             )}
                                             <li className={`message-item ${msg.sender === username ? 'sent' : 'received'}`}>
                                                 <Space align="start" direction="vertical">
-                                                    <Text strong>{msg.sender}</Text>
+                                                    <Text strong>{`${msg.sender === username ? 'Me' : msg.sender}`}</Text>
                                                     <Text>{msg.message}</Text>
                                                     <Text type="secondary">{formatTime(msg.MessageTimestamp)}</Text>
                                                 </Space>
