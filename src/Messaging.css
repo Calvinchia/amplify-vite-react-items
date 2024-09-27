@@ -2,6 +2,7 @@
 
 .messaging-layout {
     /* background-color: #f0f0f0; */
+    background-color: #ffffff;
   }
   
   .messaging-content {
@@ -9,7 +10,7 @@
     justify-content: center;
     flex-direction: column; /* Arrange child elements vertically */
     align-items: center;
-    padding: 5px;
+    padding: 0px;
   }
 
   .messaging-content .ant-card-body {

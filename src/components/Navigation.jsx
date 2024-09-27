@@ -95,6 +95,7 @@ const Navigation = () => {
                 theme="light"
                 mode="horizontal"
                 items={menuItems}
+                className="headerNav" 
                 style={{ display: 'flex', justifyContent: 'flex-end', flex: 1 }} // Align menu items to the right
               />
             )}

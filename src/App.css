@@ -23,9 +23,13 @@
   margin-left: 20px;
 }
 
+.header {
+  border-bottom:1px solid #d9d9d9;
+}
 
-
-
+.headerNav {
+  border:0px;
+}
 
 .ant-layout-header { background-color: white;
 }
