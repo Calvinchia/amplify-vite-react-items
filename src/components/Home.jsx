@@ -4,7 +4,7 @@ import { useLocation, Link } from 'react-router-dom';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import '../App.css';  // Import the CSS file for styling
-import { API_URL, S3_BASE_URL } from '../constants';
+import { API_URL, API_ROOT, S3_BASE_URL } from '../constants';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { getCurrentUser } from 'aws-amplify/auth';
 
@@ -118,6 +118,10 @@ const Home = ({ ownerType }) => {
     [loading, hasMore]
   );
 
+const handleImageError = (event) => {
+        event.target.src = "https://irsimages.s3.ap-southeast-1.amazonaws.com/picture-submissions/no-img.jpg"; // Set the placeholder image when the original fails to load
+  };
+
   return (
     <Layout>
       <Content style={{ padding: '20px' }}>
@@ -129,7 +133,7 @@ const Home = ({ ownerType }) => {
 
         <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
           {items
-            .filter(item => item.image && item.image.includes(S3_BASE_URL)) // Only show items with valid S3 images
+            //.filter(item => item.image && item.image.includes(S3_BASE_URL)) // Only show items with valid S3 images
             .map((item, index) => (
               <Col key={item.id} xs={24} sm={12} md={8} lg={6} className="card-column">
                 <Link to={`/details/${item.id}`} style={{ textDecoration: 'none' }}>
@@ -139,9 +143,12 @@ const Home = ({ ownerType }) => {
                     style={{ display: 'flex', flexDirection: 'column', height: '100%' }}  // Make the card flex and full height
                     cover={
                       <img
-                        src={`${item.image}`}
+                        src={item.image.includes(API_ROOT) ? `${API_ROOT}/imageload?itemid=${item.id}` :item.image.includes(S3_BASE_URL)? `${item.image}`: "https://irsimages.s3.ap-southeast-1.amazonaws.com/picture-submissions/no-img.jpg"}
+
                         alt={item.title}
-                        style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
+                        style={{ width: '100%', height: '200px', objectFit: 'cover' }} 
+                        onError={handleImageError}
+                        fallback="https://irsimages.s3.ap-southeast-1.amazonaws.com/picture-submissions/no-img.jpg" />
                     }
                   >
                     <div style={{ flexGrow: 1 }}>  {/* Make the card body grow to fill the remaining space */}

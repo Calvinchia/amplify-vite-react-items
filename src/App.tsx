@@ -144,7 +144,7 @@ function App() {
             <Navigation />
             <Routes>
               <Route path="/" element={<Home ownerType="others" />} />
-              <Route path="/messaging" element={<Messaging />} />
+              <Route path="/chat" element={<Messaging />} />
               <Route path="/inbox" element={<ChatGroups />} />
               <Route path="/mystuff" element={<Home ownerType="me" />} />
               <Route path="/details/:id" element={<ItemDetails />} />
