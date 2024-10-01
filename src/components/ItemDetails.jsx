@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Layout, Button, Alert, Spin, Row, Col } from 'antd';
-import { API_URL, S3_BASE_URL } from '../constants';
+import { API_URL, S3_BASE_URL, API_ROOT } from '../constants';
 import { useAuthenticator, Authenticator } from '@aws-amplify/ui-react';
 import { fetchAuthSession } from 'aws-amplify/auth';
 
@@ -77,7 +77,7 @@ const ItemDetail = () => {
 
     const handleEnquire = () => {
         // Navigate to the messaging page with itemid and current user's username
-        navigate(`/messaging?item=${id}`);
+        navigate(`/chat?item=${id}`);
     };
 
     const handleDelete = async () => {
@@ -129,7 +129,8 @@ const ItemDetail = () => {
                 <Row gutter={[16, 16]}>
                     <Col span={12}>
                         <img
-                            src={`${item?.image}`}
+                            src={item.image.includes(API_ROOT) ? `${API_ROOT}/imageload?itemid=${item.id}` :item.image.includes(S3_BASE_URL)? `${item.image}`: "https://irsimages.s3.ap-southeast-1.amazonaws.com/picture-submissions/no-img.jpg"}
+
                             alt={item?.title}
                             style={{ width: '100%', height: '300px', objectFit: 'contain', marginBottom: '16px' }}
                         />

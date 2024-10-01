@@ -4,7 +4,7 @@ import { Layout, Form, Input, Button, Alert, Spin, Row, Col, Select, Upload, mes
 import { UploadOutlined } from '@ant-design/icons';
 import { uploadData } from 'aws-amplify/storage';  // Amplify's Storage for uploading images
 import { v4 as uuidv4 } from 'uuid';  // Import uuid for generating unique IDs
-import { API_URL, S3_BASE_URL } from '../constants';
+import { API_URL, S3_BASE_URL, API_ROOT } from '../constants';
 import { fetchAuthSession } from 'aws-amplify/auth';
 
 const { Content } = Layout;
@@ -305,7 +305,8 @@ const UpdateItem = () => {
             <Col span={24}>
               <Form.Item label="Current Image">
                 <img
-                  src={`${item.image}`}
+                  src={item.image.includes(API_ROOT) ? `${API_ROOT}/imageload?itemid=${item.id}` :item.image.includes(S3_BASE_URL)? `${item.image}`: "https://irsimages.s3.ap-southeast-1.amazonaws.com/picture-submissions/no-img.jpg"}
+
                   alt={item.title}
                   style={{ width: '100%', height: '300px', objectFit: 'contain', marginBottom: '16px' }}
                 />

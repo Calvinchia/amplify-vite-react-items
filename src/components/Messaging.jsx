@@ -5,7 +5,7 @@ import { Spin, Input, Button, Card, Layout, Typography, Space, Avatar } from 'an
 import { ArrowLeftOutlined, SendOutlined, UserOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useWebSocket } from '../context/WebSocketContext'; // Import WebSocket context
-import { API_MSG, API_URL } from '../constants';
+import { API_ROOT, API_URL, S3_BASE_URL  } from '../constants';
 import 'antd/dist/reset.css';
 import '../Messaging.css';
 import moment from 'moment'; // Import moment for formatting datetime
@@ -184,7 +184,8 @@ function Messaging({ signOut }) {
                             style={{ marginRight: '10px' }}
                         />
                         <Avatar
-                            src={itemDetails.image ? `${itemDetails.image}` : undefined}
+                            src={itemDetails.image.includes(API_ROOT) ? `${API_ROOT}/imageload?itemid=${itemid}` :itemDetails.image.includes(S3_BASE_URL)? `${itemDetails.image}`: "https://irsimages.s3.ap-southeast-1.amazonaws.com/picture-submissions/no-img.jpg"}
+
                             shape="square"
                             size={64}
                             icon={<UserOutlined />}

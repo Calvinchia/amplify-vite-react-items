@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Spin, Tabs, List, Collapse, Typography, Layout, Badge } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { fetchAuthSession, getCurrentUser } from 'aws-amplify/auth';
-import { API_MSG, API_URL } from '../constants';
+import { API_MSG, API_URL, API_ROOT, S3_BASE_URL  } from '../constants';
 import { useWebSocket } from '../context/WebSocketContext'; // Use WebSocket context
 import moment from 'moment'; // Import moment for date formatting
 import 'antd/dist/reset.css';
@@ -270,7 +270,8 @@ const getMyStuffCollapseItems = (myStuffChats, itemsData, newMessages, goToMessa
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <img
-              src={itemsData[itemid]?.imageUrl}
+              src={itemsData[itemid]?.imageUrl.includes(API_ROOT) ? `${API_ROOT}/imageload?itemid=${itemid}` :itemsData[itemid]?.imageUrl.includes(S3_BASE_URL)? `${itemsData[itemid]?.imageUrl}`: "https://irsimages.s3.ap-southeast-1.amazonaws.com/picture-submissions/no-img.jpg"}
+
               alt="Item thumbnail"
               style={{ width: '40px', height: '40px', marginRight: '10px', objectFit: 'cover' }}
             />
@@ -311,7 +312,7 @@ const getMyStuffCollapseItems = (myStuffChats, itemsData, newMessages, goToMessa
 
     // Navigate to the messaging page
     const goToMessaging = (itemid, renterid) => {
-        navigate(`/messaging?item=${itemid}&renter=${renterid}`);
+        navigate(`/chat?item=${itemid}&renter=${renterid}`);
     };
 
     const tabItems = [
@@ -346,7 +347,8 @@ const getMyStuffCollapseItems = (myStuffChats, itemsData, newMessages, goToMessa
                     <List.Item.Meta
                       avatar={
                         <img
-                          src={itemsData[chatGroup.itemid]?.imageUrl}
+                          src={itemsData[chatGroup.itemid]?.imageUrl.includes(API_ROOT) ? `${API_ROOT}/imageload?itemid=${itemid}` :itemsData[chatGroup.itemid]?.imageUrl.includes(S3_BASE_URL)? `${itemsData[chatGroup.itemid]?.imageUrl}`: "https://irsimages.s3.ap-southeast-1.amazonaws.com/picture-submissions/no-img.jpg"}
+
                           alt="Item thumbnail"
                           style={{ width: '40px', height: '40px', marginRight: '10px', marginLeft: '40px', objectFit: 'cover' }}
                         />
