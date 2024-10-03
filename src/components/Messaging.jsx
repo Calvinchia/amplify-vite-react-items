@@ -165,7 +165,7 @@ function Messaging({ signOut }) {
     };
 
     const goBackToChatGroups = () => {
-        navigate('/inbox');
+        navigate('/');
     };
 
     const handleGoToDetails = (itemid) => {

@@ -139,13 +139,13 @@ function App() {
   return (
     <Authenticator.Provider>
       <WebSocketProvider> 
-        <Router>
+        <Router basename="/messaging">
           <div className="App">
             <Navigation />
             <Routes>
-              <Route path="/" element={<Home ownerType="others" />} />
+              <Route path="/other" element={<Home ownerType="others" />} />
               <Route path="/chat" element={<Messaging />} />
-              <Route path="/inbox" element={<ChatGroups />} />
+              <Route path="/" element={<ChatGroups />} />
               <Route path="/mystuff" element={<Home ownerType="me" />} />
               <Route path="/details/:id" element={<ItemDetails />} />
               <Route path="/create" element={<CreateItem />} />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Spin, Tabs, List, Collapse, Typography, Layout, Badge } from 'antd';
-import { useNavigate } from 'react-router-dom';
 import { fetchAuthSession, getCurrentUser } from 'aws-amplify/auth';
 import { API_MSG, API_URL, API_ROOT, S3_BASE_URL  } from '../constants';
 import { useWebSocket } from '../context/WebSocketContext'; // Use WebSocket context
@@ -22,9 +22,20 @@ const ChatGroups = () => {
     const [activeTab, setActiveTab] = useState('myStuff'); // Track active tab ("myStuff" or "others")
     const [username, setUsername] = useState(''); // Track username
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     
     // Use WebSocket context to get messages
     const { messages } = useWebSocket();
+
+    useEffect(() => {
+        const itemId = searchParams.get('item');
+        const renterId = searchParams.get('renter');
+
+        // If itemid and renterid exist in the query params, navigate to the chat component
+        if (itemId && renterId) {
+            navigate(`/chat?item=${itemId}&renter=${renterId}`);
+        }
+    }, [searchParams, navigate]);
 
     useEffect(() => {
         const fetchChatGroups = async () => {

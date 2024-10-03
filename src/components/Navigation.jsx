@@ -65,17 +65,17 @@ const Navigation = () => {
   // Add authenticated user items
   if (user) {
     menuItems.push(
+      // {
+      //   key: '1',
+      //   label: <Link to="/mystuff">My Stuff</Link>,
+      // },
+      // {
+      //   key: '2',
+      //   label: <Link to="/create">Create Item</Link>,
+      // },
       {
         key: '1',
-        label: <Link to="/mystuff">My Stuff</Link>,
-      },
-      {
-        key: '2',
-        label: <Link to="/create">Create Item</Link>,
-      },
-      {
-        key: '3',
-        label: <Link to="/inbox">Inbox</Link>,
+        label: <Link to="/">Inbox</Link>,
       }
     );
   }
@@ -85,7 +85,7 @@ const Navigation = () => {
       <Layout>
         <Header className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           
-        <Link to="/" style={{ color: 'inherit', textDecoration: 'none' }}>irentstuff.app</Link>
+        <Link to="https://irentstuff.app" style={{ color: 'inherit', textDecoration: 'none' }}>irentstuff.app</Link>
 
           {/* Flex container for menu and buttons */}
           <div style={{ display: 'flex', flex: 1, justifyContent: 'flex-end', alignItems: 'center' }}>
