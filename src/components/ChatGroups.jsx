@@ -114,6 +114,7 @@ const ChatGroups = () => {
             } catch (err) {
                 setError('Failed to fetch chat groups or item details.');
                 console.error('Error fetching chat groups:', err);
+                window.location.assign('https://irentstuff.app');
             } finally {
                 setLoading(false);
             }

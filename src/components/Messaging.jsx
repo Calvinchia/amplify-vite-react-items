@@ -64,6 +64,7 @@ function Messaging({ signOut }) {
                 }
             } catch (error) {
                 console.error('Error during initialization:', error);
+                window.location.assign('https://irentstuff.app');
             }
         };
 
