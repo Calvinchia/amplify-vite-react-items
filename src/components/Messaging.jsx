@@ -185,7 +185,7 @@ function Messaging({ signOut }) {
                             style={{ marginRight: '10px' }}
                         />
                         <Avatar
-                            src={itemDetails.image.includes(API_ROOT) ? `${API_ROOT}/imageload?itemid=${itemid}` :itemDetails.image.includes(S3_BASE_URL)? `${itemDetails.image}`: "https://irsimages.s3.ap-southeast-1.amazonaws.com/picture-submissions/no-img.jpg"}
+                            src={itemDetails.image.includes(API_ROOT) ? `${API_ROOT}/imageload?itemid=${itemDetails.id}` :itemDetails.image.includes(S3_BASE_URL)? `${itemDetails.image}`: "https://irsimages.s3.ap-southeast-1.amazonaws.com/picture-submissions/no-img.jpg"}
 
                             shape="square"
                             size={64}
