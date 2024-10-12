@@ -169,8 +169,31 @@ function Messaging({ signOut }) {
         navigate('/');
     };
 
-    const handleGoToDetails = (itemid) => {
-        navigate(`/details/${itemid}`); // Navigate to /details/itemid
+    const handleGoToDetails = (itemid, admin, ownerid, username) => {
+
+        
+        if (admin=="offer") {
+            if (ownerid == username) {
+                window.location.assign('https://irentstuff.app/#/OffersMade');
+            } else {
+                window.location.assign('https://irentstuff.app/#/OffersReceived');
+
+            }
+
+        } else {
+            if (ownerid == username) {
+                window.location.assign(`https://irentstuff.app/#/ViewItem/${itemid}`);
+            } else {
+                window.location.assign(`https://irentstuff.app/#/ViewItem/${itemid}`);
+                
+            }
+
+        }
+
+
+       
+        //navigate(`/details/${itemid}`); // Navigate to /details/itemid
+        
     };
 
     return (
@@ -218,13 +241,13 @@ function Messaging({ signOut }) {
                                                 </div>
                                             )}
                                             {msg.admin==="offer" ? (
-                                                <li className="message-item admin" onClick={() => handleGoToDetails(itemId)}>
+                                                <li className="message-item admin" onClick={() => handleGoToDetails(itemId, msg.admin, msg.ownerid, username)}>
                                                     <Space align="start" direction="vertical">
                                                         <Text strong>An offer was made (Click to view)</Text>
                                                     </Space>
                                                 </li>
                                             ) : msg.admin==="accept" ? (
-                                                <li className="message-item admin" onClick={() => handleGoToDetails(itemId)}>
+                                                <li className="message-item admin" onClick={() => handleGoToDetails((itemId, msg.admin, msg.ownerid, username))}>
                                                     <Space align="start" direction="vertical">
                                                         <Text strong>An offer was accepted (Click to view)</Text>
                                                     </Space>
