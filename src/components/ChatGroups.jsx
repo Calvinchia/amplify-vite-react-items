@@ -34,6 +34,9 @@ const ChatGroups = () => {
         // If itemid and renterid exist in the query params, navigate to the chat component
         if (itemId && renterId) {
             navigate(`/chat?item=${itemId}&renter=${renterId}`);
+            const queryParams = location.search; // This gives you the current query string
+            // Change the URL to the root ("/") but keep the query string
+            window.history.replaceState({}, '', `/messaging/${queryParams}`);
         }
     }, [searchParams, navigate]);
 

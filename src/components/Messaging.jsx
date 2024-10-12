@@ -32,6 +32,17 @@ function Messaging({ signOut }) {
     const [displayedMessages, setDisplayedMessages] = useState([]);
 
     useEffect(() => {
+        const queryParams = location.search; // This gives you the current query string
+        // Change the URL to the root ("/") but keep the query string
+        window.history.replaceState({}, '', `/messaging/${queryParams}`);
+    }, [navigate]);
+
+    useEffect(() => {
+
+        const queryParams = location.search; // This gives you the current query string
+        // Change the URL to the root ("/") but keep the query string
+        window.history.replaceState({}, '', `/messaging/${queryParams}`);
+        
         const initializeUserAndItem = async () => {
             try {
                 setDisplayedMessages([]);
