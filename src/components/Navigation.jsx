@@ -63,8 +63,8 @@ const Navigation = () => {
   const menuItems = [];
 
   // Add authenticated user items
-  if (user) {
-    menuItems.push(
+  //if (user) {
+    //menuItems.push(
       // {
       //   key: '1',
       //   label: <Link to="/mystuff">My Stuff</Link>,
@@ -73,12 +73,12 @@ const Navigation = () => {
       //   key: '2',
       //   label: <Link to="/create">Create Item</Link>,
       // },
-      {
-        key: '1',
-        label: <Link to="/">Inbox</Link>,
-      }
-    );
-  }
+      //{
+        //key: '1',
+        //label: <Link to="/">Inbox</Link>,
+      //}
+    //);
+  //}
 
   return (
     <>

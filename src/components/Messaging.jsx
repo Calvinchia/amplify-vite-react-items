@@ -177,7 +177,8 @@ function Messaging({ signOut }) {
     };
 
     const goBackToChatGroups = () => {
-        navigate('/');
+        //navigate('/');
+        window.location.assign('https://irentstuff.app/messaging/');
     };
 
     const handleGoToDetails = (itemid, admin, ownerid, username) => {
