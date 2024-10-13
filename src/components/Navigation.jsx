@@ -85,7 +85,7 @@ const Navigation = () => {
       <Layout>
         <Header className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           
-        <Link to="https://irentstuff.app" style={{ color: 'inherit', textDecoration: 'none' }}>irentstuff.app</Link>
+        <Link to="https://irentstuff.app" style={{ color: '#ffffffde',  opacity: 0.65, paddingLeft:"5%", textDecoration: 'none' }}>irentstuff</Link>
 
           {/* Flex container for menu and buttons */}
           <div style={{ display: 'flex', flex: 1, justifyContent: 'flex-end', alignItems: 'center' }}>

@@ -182,8 +182,13 @@ function Messaging({ signOut }) {
 
     const handleGoToDetails = (itemid, admin, ownerid, username) => {
 
-        
-        if (admin=="offer") {
+        //For rental: offered, confirmed, active, cancelled, completed
+        //For purchase: offered, confirmed, pending, sold
+
+        //offered, confirmed, active, cancelled, completed, pending, sold
+
+        //if (admin=="offered") {
+        if (admin === "offered" || admin === "confirmed" || admin === "pending") {
             if (ownerid == username) {
                 window.location.assign('https://irentstuff.app/#/OffersMade');
             } else {
@@ -251,16 +256,47 @@ function Messaging({ signOut }) {
                                                     </Text>
                                                 </div>
                                             )}
-                                            {msg.admin==="offer" ? (
-                                                <li className="message-item admin" onClick={() => handleGoToDetails(itemId, msg.admin, msg.ownerid, username)}>
+                                            
+                                            {msg.admin==="offered" ? (
+                                                <li className="message-item admin" onClick={() => handleGoToDetails(msg.itemid, msg.admin, msg.ownerid, username)}>
                                                     <Space align="start" direction="vertical">
                                                         <Text strong>An offer was made (Click to view)</Text>
                                                     </Space>
                                                 </li>
-                                            ) : msg.admin==="accept" ? (
-                                                <li className="message-item admin" onClick={() => handleGoToDetails((itemId, msg.admin, msg.ownerid, username))}>
+                                            ) : msg.admin==="confirmed" ? (
+                                                <li className="message-item admin" onClick={() => handleGoToDetails(msg.itemid, msg.admin, msg.ownerid, username)}>
                                                     <Space align="start" direction="vertical">
                                                         <Text strong>An offer was accepted (Click to view)</Text>
+                                                    </Space>
+                                                </li>
+                                            ) : msg.admin==="active" ? (
+                                                <li className="message-item admin" onClick={() => handleGoToDetails(msg.itemid, msg.admin, msg.ownerid, username)}>
+                                                    <Space align="start" direction="vertical">
+                                                        <Text strong>This item is now active (Click to view)</Text>
+                                                    </Space>
+                                                </li>
+                                            ) : msg.admin==="cancelled" ? (
+                                                <li className="message-item admin" onClick={() => handleGoToDetails(msg.itemid, msg.admin, msg.ownerid, username)}>
+                                                    <Space align="start" direction="vertical">
+                                                        <Text strong>An offer was cancelled (Click to view)</Text>
+                                                    </Space>
+                                                </li>
+                                            ) : msg.admin==="completed" ? (
+                                                <li className="message-item admin" onClick={() => handleGoToDetails(msg.itemid, msg.admin, msg.ownerid, username)}>
+                                                    <Space align="start" direction="vertical">
+                                                        <Text strong>An offer was completed (Click to view)</Text>
+                                                    </Space>
+                                                </li>
+                                            ) : msg.admin==="pending" ? (
+                                                <li className="message-item admin" onClick={() => handleGoToDetails(msg.itemid, msg.admin, msg.ownerid, username)}>
+                                                    <Space align="start" direction="vertical">
+                                                        <Text strong>An offer is pending (Click to view)</Text>
+                                                    </Space>
+                                                </li>
+                                            ) : msg.admin==="sold" ? (
+                                                <li className="message-item admin" onClick={() => handleGoToDetails(msg.itemid, msg.admin, msg.ownerid, username)}>
+                                                    <Space align="start" direction="vertical">
+                                                        <Text strong>This item has been sold (Click to view)</Text>
                                                     </Space>
                                                 </li>
                                             ) : (
