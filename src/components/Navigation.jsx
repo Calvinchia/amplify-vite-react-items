@@ -63,8 +63,8 @@ const Navigation = () => {
   const menuItems = [];
 
   // Add authenticated user items
-  //if (user) {
-    //menuItems.push(
+  if (user) {
+    menuItems.push(
       // {
       //   key: '1',
       //   label: <Link to="/mystuff">My Stuff</Link>,
@@ -73,12 +73,26 @@ const Navigation = () => {
       //   key: '2',
       //   label: <Link to="/create">Create Item</Link>,
       // },
-      //{
-        //key: '1',
-        //label: <Link to="/">Inbox</Link>,
-      //}
-    //);
-  //}
+      {
+        key: '1',
+        label: <Link to="https://irentstuff.app/#/OffersMade">Offers Made</Link>,
+      },
+      {
+        key: '2',
+        label: <Link to="https://irentstuff.app/#/OffersReceived">Offers Received</Link>,
+      },
+      {
+        key: '3',
+        label: <Link to="https://irentstuff.app/#/MyItems">My Items</Link>,
+      },
+      {
+        key: '4',
+        label: <Link to="https://irentstuff.app/#/AddItem">Add New Item</Link>,
+      }
+
+      
+    );
+  }
 
   return (
     <>
