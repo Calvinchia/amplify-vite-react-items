@@ -362,7 +362,7 @@ const getMyStuffCollapseItems = (myStuffChats, itemsData, newMessages, goToMessa
                     <List.Item.Meta
                       avatar={
                         <img
-                          src={itemsData[chatGroup.itemid]?.imageUrl.includes(API_ROOT) ? `${API_ROOT}/imageload?itemid=${itemid}` :itemsData[chatGroup.itemid]?.imageUrl.includes(S3_BASE_URL)? `${itemsData[chatGroup.itemid]?.imageUrl}`: "https://irsimages.s3.ap-southeast-1.amazonaws.com/picture-submissions/no-img.jpg"}
+                          src={itemsData[chatGroup.itemid]?.imageUrl.includes(API_ROOT) ? `${API_ROOT}/imageload?itemid=${chatGroup.itemid}` :itemsData[chatGroup.itemid]?.imageUrl.includes(S3_BASE_URL)? `${itemsData[chatGroup.itemid]?.imageUrl}`: "https://irsimages.s3.ap-southeast-1.amazonaws.com/picture-submissions/no-img.jpg"}
 
                           alt="Item thumbnail"
                           style={{ width: '40px', height: '40px', marginRight: '10px', marginLeft: '40px', objectFit: 'cover' }}

@@ -191,9 +191,11 @@ function Messaging({ signOut }) {
         //if (admin=="offered") {
         if (admin === "offered" || admin === "confirmed" || admin === "pending") {
             if (ownerid == username) {
-                window.location.assign('https://irentstuff.app/#/OffersMade');
-            } else {
                 window.location.assign('https://irentstuff.app/#/OffersReceived');
+            } else {
+                
+
+                window.location.assign('https://irentstuff.app/#/OffersMade');
 
             }
 
